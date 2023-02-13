@@ -62,6 +62,7 @@ class StormFile {
      */
      loadJSON ( callback ) {
 
+         var s = 0;
         var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
         xobj.open('GET', this.stormFile, true);
