@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hurricane Demo</title>
+    <link rel="stylesheet" type="text/css" href="css/gfx-scene.css" />
+    <!-- Set the viewport size to the screen size, so it will be displayed maximized, but unscaled. -->
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"/>
+
+    <!-- Include several libraries from THREE.js and the Scene class  -->
+    <script src="three-js/three.js"></script>
+    <script src="three-js/Detector.js"></script>
+    <script src="three-js/stats.js"></script>
+
+    <script src="gfx/dat.gui.min.js"></script>
+    <script src="gfx/OrbitControls-Touch-Ortho.js"></script>
+    <script src="gfx/math-ext.js"></script>
+    <script src="gfx/HttpStatus.js"></script>
+    <script src="gfx/gfx-scene.js"></script>
+    <script src="gfx/Julian.js"></script>
+    <script src="gfx/Carto.js"></script>
+    <script src="gfx/GreatCircle.js"></script>
+
+    <script src="js/StormData.js"></script>
+    <script src="js/StormFile.js"></script>
+    <script src="js/HurrPlot.js"></script>
+    <script src="js/HurrGui.js"></script>
+
+</head>
+<body>
+
+<script>
+    this.hurrPlot;
+    this.stormFile;
+   // this.hurrGui;
+
+    // then initialize our demo's stuff
+    initializeDemo();
+
+    /**
+     * Initialize the Demo.
+     */
+    function initializeDemo() {
+
+        this.hurrPlot = new HurrPlot();
+
+        // Create the mesh onto which we will render the output of the hurricane model
+        this.hurrPlot.createGlobe();
+
+        loadStorms();
+    }
+
+    /**
+     * Load all the storms in the specified file, parsing them into JSON
+     */
+    function loadStorms() {
+
+        stormFile = new StormFile();
+        stormFile.loadData( "data/hurdat2-1851-2016-041117.json", stormsLoaded );
+    }
+
+    /**
+     * Call back from loadStorms:HTTPRequest when data has been loaded
+     */
+    function stormsLoaded() {
+        hurrGui = new HurrGui();
+
+        hurrGui.setupDatGui();
+    }
+</script>
+
+</body>
+</html>
