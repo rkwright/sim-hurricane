@@ -2,6 +2,37 @@
  * Storm-data loading facilities.  This is based on loading the JSON file derived from the
  * hurrdat2 data file as documented in www.nhc.noaa.gov/data/hurdat/hurdat2-format-atlantic.pdf
  *
+ * 2021 (Spaces 1-4) – Year
+ * 08 (Spaces 5-6) – Month
+ * 29 (Spaces 7-8, before 1st comma) – Day
+ * 16 (Spaces 11-12) – Hours in UTC (Universal Time Coordinate)
+ * 55 (Spaces 13-14, before 2nd comma) – Minutes
+ * L (Space 17, before 3rd comma) – Record identifier (see notes below)
+ * C – Closest approach to a coast, not followed by a landfall
+ * G – Genesis
+ * I – An intensity peak in terms of both pressure and wind
+ * L – Landfall (center of system crossing a coastline)
+ * P – Minimum in central pressure
+ * R – Provides additional detail on the intensity of the cyclone when rapid changes are underway
+ * S – Change of status of the system
+ * T – Provides additional detail on the track (position) of the cyclone
+ * W – Maximum sustained wind speed
+ * HU (Spaces 20-21, before 4th comma) – Status of system. Options are:
+ * TD – Tropical cyclone of tropical depression intensity (< 34 knots)
+ * TS – Tropical cyclone of tropical storm intensity (34-63 knots)
+ * HU – Tropical cyclone of hurricane intensity (> 64 knots)
+ * EX – Extratropical cyclone (of any intensity)
+ * SD – Subtropical cyclone of subtropical depression intensity (< 34 knots)
+ * SS – Subtropical cyclone of subtropical storm intensity (> 34 knots)
+ * LO – A low that is neither a tropical cyclone, a subtropical cyclone, nor an extratropical cyclone (of any intensity)
+ * WV – Tropical Wave (of any intensity)
+ * DB – Disturbance (of any intensity)
+ * 29.1 (Spaces 24-27) – Latitude
+ * N (Space 28, before 5th comma) – Hemisphere – North or South
+ * 90.2 (Spaces 31-35) – Longitude
+ * W (Space 36, before 6th comma) – Hemisphere – West or East
+ * 130 (Spaces 39-41, before 7th comma) – Maximum sustained wind (in knots)
+ *
  * @author rkwright / www.geofx.com
  *
  * Copyright 2017, All rights reserved.
