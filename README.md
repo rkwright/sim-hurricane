@@ -17,7 +17,7 @@ This is a simple time-stepping model of hurricanes based on the work of Greg Hol
 
 ### **Goal:** 
 
-Traverse all the storms and remove any storm with signficant amounts of missing data. Return some stats about the number of storms, missing data, etc.  Result of process is a revised version of the input JSON object which has only valid storms with valid data, though some of the data may have been intewrpolated.
+Traverse all the storms and remove any storm with signficant amounts of missing data. Return some stats about the number of storms, missing data, etc.  Result of process is a revised version of the input JSON object which has only valid storms with valid data, though some of the data may have been interpolated.
 
 #### **Missing Data**
 

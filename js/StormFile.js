@@ -61,10 +61,8 @@ class StormFile {
 
     // constructor
     constructor () {
-      //  this.stormFile = undefined;
-       // this.jsonData = undefined;
 
-       this.index = 0;
+        this.index = 0;
 
         window.stormThis = this;
     }
@@ -86,9 +84,9 @@ class StormFile {
             try {
                 stormThis.jsonData = JSON.parse(response);
 
-                stormThis.validateStorms();
+                //stormThis.validateStorms();
 
-                if (stormThis.pruneStorms()) {
+                if (stormThis.validateStorms()) {
                     stormThis.stormsLoaded();
                 }
 
@@ -126,14 +124,6 @@ class StormFile {
     }
 
     /**
-     * Getter for the JSON data
-     * @returns {*}
-     */
-    getJSON () {
-        return this.jsonData;
-    }
-
-    /**
      * Walk through the JSON data and for each storm, remove any storm with
      * consecutive entries with MISSING data. For storms with missing data
      * interpolate the missing data.
@@ -147,85 +137,17 @@ class StormFile {
                 let entry = storm.entries[n];
            }
         }
-    }
-    /**
-     * Walk through the JSON data and for each storm, remove any storm with 3
-     * or more consecutive entries with MISSING data. For storms with missing data (<3)
-     * interpolate the missing data.
-     */
-    pruneStorms () {
-
-        for ( var i in this.jsonData.storms ) {
-            var storm = this.jsonData.storms[i];
-            this.convertNASADates( storm );
-            //this.fillMissingValues( storm );
-        }
 
         return true;
     }
 
     /**
-     * For this storm,  convert the NASA-style (F77) dates to JS Data
-     * @param storm
-     */
-    convertNASADates ( storm ) {
-        for ( var i in storm.entries ) {
-            var entry = storm.entries[i];
-            entry.date = this.getUTCDate(entry);
-        }
-    }
-
-    /**
-     * Checks the values for lat/lon, pressure and windspeed.
-     * If any of the values are missing (-999), then the value
-     * needs to be computed via linear interpolation.
-     * @param storm
-     */
-    fillMissingValues ( storm ) {
-        // this.fillMissingValuesByCol( storm, StormData.LAT);
-        //this.fillMissingValuesByCol( storm, StormData.LON);
-        //this.fillMissingValuesByCol( storm, StormData.MAXWIND);
-        this.fillMissingValuesByCol( storm, StormFile.MINPRESS);
-    }
-
-    linearInterp ( entries, col ) {
-
-
-    }
-
-    /**
      *
-     * @param storm
+     * @param entries
      * @param col
      */
-    fillMissingValuesByCol ( storm, col ) {
+    linearInterp ( entries, col ) {
 
-        this.index   = 0;
-
-        while ( this.getNextEntry() ) {
-
-            var curEnt = entries[this.index];
-            if (curEnt[col] === StormFile.MISSING) {
-                console.log("Handling missing value here");
-                if (this.linearInterp( curEnt, col )) {
-
-                }
-                else if ( this.lerp( curEnt, col ) ) {
-
-                }
-            }
-        }
-    }
-    getNextEntry ( entries, skipped ) {
-        if ( skipped.length > 0) {
-            this.index = skipped.pop();
-            return true;
-        }
-        else if (this.index < entries.length) {
-            return true;
-        }
-
-        return false;
     }
 
     /**

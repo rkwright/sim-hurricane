@@ -26,78 +26,40 @@ class HurrGui  {
 
         this.parmOptions = {};
 
-        this.stormsGui = undefined;
-        this.parmsGui  = undefined;
-
         window.gThis = this;
     }
 
     /**
-     * For each storm, fetch the ATCID and Name, concatenate them and add
-     * them to the array
-     *
-     * @param storms
-     * @returns {Array}
+     * Set up the datgui controls on the basis of the loaded storm data
      */
-    getStormLabels ( storms ) {
-        var results = [];
-        var storm;
-        var mois = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    setupStormsGui = () => {
+        this.stormsGui = this.gui.addFolder("Storms");
 
-        for (var index = 0; index < storms.length; index++) {
-            storm = storms[index];
-            var entry = storm.entries[0];
-            var start = mois[entry[1]] + " " + entry[2];
-            if (storm) {
-                var label = storm.atcID + " : " + storm.name + " : " + start;
-                results.push(label);
-            }
-        }
+        this.years = this.stormFile.getYearsWithStorms();
+        this.storms = this.stormFile.getStormsForYear(this.years[0]);
+        this.curStorm = this.storms[0];
+        this.stormLabels = this.getStormLabels(this.storms);
+        this.entryLabels = this.getEntryLabels(this.storms[0]);
 
-        return results;
-    }
+        //this.yearsparmsGui = this.gui.addFolder("Storms");
 
-    /**
-     * Construct an array of strings which comprises the data in each entry
-     * @param storm
-     * @returns {Array}
-     */
-    getEntryLabels ( storm ) {
-        var results = [];
-        var entry;
-        var label;
+        this.stormOptions.year = this.years[0];
+        this.stormOptions.stormLabels = this.stormLabels[0];
+        this.stormOptions.entryLabels = this.entryLabels[0];
+        this.stormOptions.update = function () {
+            window.gThis.updateCallback( window.gThis.curStorm );
+        };
 
-        for (var index = 0; index < storm.entries.length; index++) {
-            entry = storm.entries[index];
-            if (entry) {
-                label = entry[2] + " " + this.pad("0000", entry[3], true).substring(0, 2) + "h " + entry[6].toFixed(1) + " " +
-                    entry[7].toFixed(1) + " " + entry[8].toFixed(0) + " " + entry[9].toFixed(0);
 
-                results.push(label);
-            }
-        }
+        this.stormsGui.add(this.stormOptions, "year", this.years).name("Year").onChange(this.yearChange);
 
-        return results;
-    }
+        this.updateStorms(this.stormOptions.year);
 
-    /**
-     * Pad a string with specified chars, left or right
-     * For example, to zero pad a number to a length of 10 digits,
-     *     pad('0000000000',123,true);  ->   "0000000123"
-     *
-     * @param pad       the string to fill
-     * @param str       the string to be padded
-     * @param padLeft   padding on the left or right
-     * @returns {*}
-     */
-    pad ( pad, str, padLeft ) {
-        if (typeof str === 'undefined')
-            return pad;
-        if (padLeft) {
-            return (pad + str).slice(-pad.length);
-        } else {
-            return (str + pad).substring(0, pad.length);
-        }
+        this.updateEntries(this.curStorm);
+
+        this.updateButton();
+
+        this.stormsGui.open();
     }
 
     /**
@@ -106,7 +68,6 @@ class HurrGui  {
      * "refresh" the data in a controller
      */
     updateStorms (year) {
-
         if (this.updateStorms.gui !== undefined)
             this.stormsGui.remove(this.updateStorms.gui);
 
@@ -178,35 +139,6 @@ class HurrGui  {
       };
     }
 
-    /**
-     * Set up the datgui controls on the basis of the loaded storm data
-     */
-    setupStormsGui = () => {
-        this.stormsGui = this.gui.addFolder("Storms");
-
-        this.years = this.stormFile.getYearsWithStorms();
-        this.storms = this.stormFile.getStormsForYear(this.years[0]);
-        this.curStorm = this.storms[0];
-        this.stormLabels = this.getStormLabels(this.storms);
-        this.entryLabels = this.getEntryLabels(this.storms[0]);
-
-        this.stormOptions.year = this.years[0];
-        this.stormOptions.stormLabels = this.stormLabels[0];
-        this.stormOptions.entryLabels = this.entryLabels[0];
-        this.stormOptions.update = function () {
-            window.gThis.updateCallback( window.gThis.curStorm );
-        };
-
-        this.stormsGui.add(this.stormOptions, "year", this.years).name("Year").onChange(this.yearChange);
-
-        this.updateStorms(this.stormOptions.year);
-
-        this.updateEntries(this.curStorm);
-
-        this.updateButton();
-
-        this.stormsGui.open();
-    }
 
     /**
      * Remove and renew the update "button"
@@ -224,21 +156,93 @@ class HurrGui  {
     /**
      * Set up the datgui controls on the basis of the loaded storm data
      */
-    setupParmsGui () {
+    setupParmsGui = () => {
         this.parmsGui = this.gui.addFolder("Parms");
-
-        this.parmOptions.run = function () {
-            window.gThis.runCallback( window.gThis.curStorm );
-        };
-
-        this.runButton();
 
         this.parmsGui.open();
     }
 
+    /**
+     * Set up the datgui controls on the basis of the loaded storm data
+     */
+    setupParmsGui = () => {
+        this.parmsGui = this.gui.addFolder("Parms");
+
+        this.parmsGui.open();
+    }
     setupDatGui = () => {
 
-        this.setupStormsGui();
+        // currently, we have to call the methods in the below order otherwise it crashes?!
         this.setupParmsGui();
+        this.setupYearsGui();
+        this.setupStormsGui();
+     }
+    /**
+     * For each storm, fetch the ATCID and Name, concatenate them and add
+     * them to the array
+     *
+     * @param storms
+     * @returns {Array}
+     */
+    getStormLabels ( storms ) {
+        var results = [];
+        var storm;
+        var mois = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        for (var index = 0; index < storms.length; index++) {
+            storm = storms[index];
+            var entry = storm.entries[0];
+            var start = mois[entry[1]] + " " + entry[2];
+            if (storm) {
+                var label = storm.atcID + " : " + storm.name + " : " + start;
+                results.push(label);
+            }
+        }
+
+        return results;
     }
+
+    /**
+     * Construct an array of strings which comprises the data in each entry
+     * @param storm
+     * @returns {Array}
+     */
+    getEntryLabels ( storm ) {
+        var results = [];
+        var entry;
+        var label;
+
+        for (var index = 0; index < storm.entries.length; index++) {
+            entry = storm.entries[index];
+            if (entry) {
+                label = entry[2] + " " + this.pad("0000", entry[3], true).substring(0, 2) + "h " + entry[6].toFixed(1) + " " +
+                    entry[7].toFixed(1) + " " + entry[8].toFixed(0) + " " + entry[9].toFixed(0);
+
+                results.push(label);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Pad a string with specified chars, left or right
+     * For example, to zero pad a number to a length of 10 digits,
+     *     pad('0000000000',123,true);  ->   "0000000123"
+     *
+     * @param pad       the string to fill
+     * @param str       the string to be padded
+     * @param padLeft   padding on the left or right
+     * @returns {*}
+     */
+    pad ( pad, str, padLeft ) {
+        if (typeof str === 'undefined')
+            return pad;
+        if (padLeft) {
+            return (pad + str).slice(-pad.length);
+        } else {
+            return (str + pad).substring(0, pad.length);
+        }
+    }
+
 }
