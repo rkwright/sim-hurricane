@@ -64,8 +64,7 @@ class StormFile {
         this.stormFile = undefined;
         this.jsonData = undefined;
 
-        this.skipped = [];
-        this.index = 0;
+       this.index = 0;
 
         window.stormThis = this;
     }
@@ -75,7 +74,7 @@ class StormFile {
     /**
      * Load the data from the specified JSON file, then parse the resulting payload
      * @param stormFile
-     * @param stormLoaded
+     * @param stormsLoaded
      */
     loadData ( stormFile, stormsLoaded ) {
 
@@ -105,11 +104,10 @@ class StormFile {
 
     /**
      * Load the current stormfile
-     * @param callbackl
+     * @param callBack
      */
-     loadJSON ( callback ) {
+     loadJSON ( callBack ) {
 
-         var s = 0;
         var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
         xobj.open('GET', this.stormFile, true);
@@ -121,7 +119,7 @@ class StormFile {
             if (xobj.readyState === XMLHttpRequest.DONE && xobj.status === HttpStatus.OK) {
                 // Required use of an anonymous callback as .open will NOT return a value
                 // but simply returns undefined in asynchronous mode
-                callback(xobj.responseText);
+                callBack(xobj.responseText);
             }
         };
         xobj.send(null);
@@ -162,6 +160,8 @@ class StormFile {
             this.convertNASADates( storm );
             //this.fillMissingValues( storm );
         }
+
+        return true;
     }
 
     /**
@@ -200,7 +200,6 @@ class StormFile {
      */
     fillMissingValuesByCol ( storm, col ) {
 
-        this.skipped = [];
         this.index   = 0;
 
         while ( this.getNextEntry() ) {
