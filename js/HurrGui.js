@@ -112,7 +112,7 @@ class HurrGui  {
 
         this.storms = this.stormFile.getStormsForYear(Number(year));
         this.curStorm = this.storms[0];
-        this.stormLabels = this.stormFile.getStormLabels(this.storms);
+        this.stormLabels = this.getStormLabels(this.storms);
         this.stormOptions.stormLabels = this.stormLabels[0];
 
         this.updateStorms.gui = this.stormsGui.add(this.stormOptions, "stormLabels", this.stormLabels).name("Storms");
@@ -135,14 +135,14 @@ class HurrGui  {
      * Update existing controller for the entries and create a new one
      */
     updateEntries (storm) {
-        if (this.updateEntries.gui !== undefined)
-            this.stormsGui.remove(this.updateEntries.gui);
+        if (this.gui !== undefined)
+            this.stormsGui.remove(this.updateStorms.gui);
 
-        this.entryLabels = stormFile.getEntryLabels(storm);
+        this.entryLabels = this.getEntryLabels(storm);
         this.stormOptions.entryLabels = this.entryLabels[0];
 
-        this.updateEntries.gui = this.stormsGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries");
-        this.updateEntries.gui.onChange(this.entriesChange);
+        this.gui = this.stormsGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries");
+        this.gui.onChange(this.entriesChange);
     }
 
     /**
@@ -150,7 +150,7 @@ class HurrGui  {
      */
     entriesChange () {
         var gThis = window.gThis;
-        var index = gThis.entryLabels.indexOf( gThis.stormOptions.entryLabels );
+        gThis.entryLabels.indexOf( gThis.stormOptions.entryLabels );
     }
 
     /**
@@ -184,11 +184,11 @@ class HurrGui  {
     setupStormsGui = () => {
         this.stormsGui = this.gui.addFolder("Storms");
 
-        this.years = this.stormFile.getYears();
+        this.years = this.stormFile.getYearsWithStorms();
         this.storms = this.stormFile.getStormsForYear(this.years[0]);
         this.curStorm = this.storms[0];
-        this.stormLabels = this.stormFile.getStormLabels(this.storms);
-        this.entryLabels = this.stormFile.getEntryLabels(this.storms[0]);
+        this.stormLabels = this.getStormLabels(this.storms);
+        this.entryLabels = this.getEntryLabels(this.storms[0]);
 
         this.stormOptions.year = this.years[0];
         this.stormOptions.stormLabels = this.stormLabels[0];
@@ -197,7 +197,7 @@ class HurrGui  {
             window.gThis.updateCallback( window.gThis.curStorm );
         };
 
-        var gui_year = this.stormsGui.add(this.stormOptions, "year", this.years).name("Year").onChange(this.yearChange);
+        this.stormsGui.add(this.stormOptions, "year", this.years).name("Year").onChange(this.yearChange);
 
         this.updateStorms(this.stormOptions.year);
 

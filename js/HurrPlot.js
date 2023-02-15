@@ -13,7 +13,7 @@
 class HurrPlot  {
 
     // Constants
-    static REVISION = '1.0';
+    static REVISION = '1.1.0';
 
     // ----- Constants ------
     static SAFFIR =  [
@@ -26,13 +26,13 @@ class HurrPlot  {
         {cat: 'TD', minMPH: 33, color: 0x5dbaff}
     ];
 
-    static  fThis = this;
+   // static  fThis = this;
 
     // Constructor
     constructor () {
         //this.gfxScene = gfxScene;
 
-        this.ready = false;
+        //this.ready = false;
         //var gThis = this;
 
         // allocate the Scene object, request orbitControls, some of 3D axes 10 units high and the stats
@@ -46,7 +46,7 @@ class HurrPlot  {
         this.saffirMat = [];
         this.createSaffirMat();
 
-        this.earthMesh;
+        //this.earthMesh;
         this.earthGlobe = new THREE.SphereGeometry(2,32,32);
         //var self = this;
 
@@ -61,7 +61,7 @@ class HurrPlot  {
 
     createGlobeMat ( callBack, pThis ) {
         var textureLoader = new THREE.TextureLoader();
-        var bumpLoader = new THREE.TextureLoader();
+        //var bumpLoader = new THREE.TextureLoader();
         var material = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: true, opacity: 0.75});
         textureLoader.load("images/8081-earthmap8k.jpg", function (texture) {
             material.map = texture;
@@ -121,27 +121,87 @@ class HurrPlot  {
 
         return i;
     }
-    //////////////
+
     /**
-     * Create the sphere mesh and wrap it with the image
+     * Plot the current storm track by fetching the set of positions and creating
+     * great-circle arcs for each and creating a curve in three.js for them.
+     *
+     * The procedure is:
+     * - iterate over the storm track entries
+     * - for each pair of points
+     * - calculate the great circle arc, which returns an array of lat/lon [n][2]
+     * - generate the transform of that array into scaled 3D-space as an array of Vector3
+     * - generate a CatMullCurve using three.js
+     * - generate a tube geometry using that curve, returns the resulting geometry
      */
-    createGlobe0 () {
-        this.earthGlobe = new THREE.SphereGeometry(2, 32, 32);
+    plotStormTrack ( curStorm ) {
+        var gcGen = new GreatCircle();
+        var points;
+        var startLL = {lat: curStorm.entries[0][STORMDATA.LAT], lon: curStorm.entries[0][STORMDATA.LON]};
+        var endLL = {};
+        var scale = 2 / CARTO.EARTH_DIAMETER;
+        var xyz;
+        var plot = window.plotObj;
 
-        var textureLoader = new THREE.TextureLoader();
-        var bumpLoader = new THREE.TextureLoader();
-        var mat = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: true, opacity: 0.75});
-        textureLoader.load("images/8081-earthmap8k.jpg", function (texture) {
-            mat.map = texture;
-            mat.needsUpdate = true;
-            textureLoader.load("images/8081-earthbump8k.jpg", function (bump) {
-                mat.bumpMap = bump;
-                mat.bumpScale = 0.05;
+        var saffirCat = stormData.getSaffirCat(curStorm.entries[0][STORMDATA.MAXWIND]);
+        var mat = plot.saffirMat[saffirCat];
 
-                window.plotObj.earthMesh = new THREE.Mesh(globe, mat);
-                fThis.gfxScene.add(window.plotObj.earthMesh);
-                this.ready = true;
-            });
-        });
+        plot.roundJoin(startLL.lat, startLL.lon, scale, mat);
+
+        console.log(" LL: " + startLL.lat + ", " + startLL.lon);
+
+        for (var i = 1; i < curStorm.entries.length; i++) {
+            endLL = {lat: curStorm.entries[i][STORMDATA.LAT], lon: curStorm.entries[i][STORMDATA.LON]};
+
+            saffirCat = stormFile.getSaffirCat(curStorm.entries[i][STORMDATA.MAXWIND]);
+            mat = plot.saffirMat[saffirCat];
+
+            plot.roundJoin(endLL.lat, endLL.lon, scale, mat);
+
+            console.log(" LL: " + endLL.lat + ", " + endLL.lon);
+
+            points = gcGen.generateArc(startLL, endLL, 10, {offset: 10});
+
+            var pts = points[0];
+            var track = [];
+
+            for (var j = 0; j < pts.length; j++) {
+                xyz = carto.latLonToXYZ(pts[j][1], pts[j][0], CARTO.EARTH_DIAMETER, scale);
+                track.push(xyz);
+                console.log("xyz: " + xyz.x.toFixed(2) + " " + xyz.y.toFixed(2) + " " + xyz.z.toFixed(2));
+            }
+
+            var curve = new THREE.CatmullRomCurve3(track);
+            var geometry = new THREE.TubeGeometry(curve, track.length, TRACK_DIA, 32, false);
+
+            var arcMesh = new THREE.Mesh(geometry, mat);
+            plot.gfxScene.add(arcMesh);
+
+            startLL = endLL;
+        }
     }
+
+    /**
+     * Create a sphere to form the "round join" between sections of the track
+     */
+    roundJoin (lat, lon, scale, mat) {
+        var join = new THREE.SphereGeometry(TRACK_DIA, 32, 32);
+
+        var xyz = carto.latLonToXYZ(lat, lon, CARTO.EARTH_DIAMETER, scale);
+
+        var mesh = new THREE.Mesh(join, mat);
+        mesh.position.set(xyz.x, xyz.y, xyz.z);
+        gfxScene.add(mesh);
+    }
+
+    /**
+     * Called by the hurricane model to have the sample data rendered
+     * In this case, the wind arrows and eye are already in existence
+     * so we just update the location of the eye and set the direction
+     * and scale of the arrows
+     */
+    renderHurricane (eyex, eyeY, sampleData) {
+
+    }
+
 }

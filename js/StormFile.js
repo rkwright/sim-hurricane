@@ -61,8 +61,8 @@ class StormFile {
 
     // constructor
     constructor () {
-        this.stormFile = undefined;
-        this.jsonData = undefined;
+      //  this.stormFile = undefined;
+       // this.jsonData = undefined;
 
        this.index = 0;
 

@@ -62,9 +62,20 @@
      * Call back from loadStorms:HTTPRequest when data has been loaded
      */
     function stormsLoaded() {
-        hurrGui = new HurrGui();
+        hurrGui = new HurrGui( hurrPlot.gfxScene.gui, stormFile, hurrPlot.plotStormTrack, runStorm);
 
         hurrGui.setupDatGui();
+    }
+
+    /**
+     *  Initialize the current model run and kick it off
+     */
+    function runStorm( storm ) {
+        hurrModel.initArrays( storm );
+        hurrModel.initialise( storm );
+
+        // Start the animation
+        //animateScene();
     }
 </script>
 
