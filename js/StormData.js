@@ -23,16 +23,16 @@ class StormData  {
 
     // ----- Constants ------
     static SAFFIR =  [
-            {cat: '5', minMPH: 157, color: 0xff6060},
-            {cat: '4', minMPH: 130, color: 0xff8f20},
-            {cat: '3', minMPH: 111, color: 0xffc140},
-            {cat: '2', minMPH: 96, color: 0xffe775},
-            {cat: '1', minMPH: 74, color: 0xffffcc},
-            {cat: 'TS', minMPH: 39, color: 0x01faf4},
-            {cat: 'TD', minMPH: 33, color: 0x5dbaff}
-        ];
+        {cat: '5', minMPH: 157, color: 0xff6060},
+        {cat: '4', minMPH: 130, color: 0xff8f20},
+        {cat: '3', minMPH: 111, color: 0xffc140},
+        {cat: '2', minMPH: 96, color: 0xffe775},
+        {cat: '1', minMPH: 74, color: 0xffffcc},
+        {cat: 'TS', minMPH: 39, color: 0x01faf4},
+        {cat: 'TD', minMPH: 33, color: 0x5dbaff}
+    ];
 
-        // contents of the entry fields
+    // contents of the entry fields
     static YEAR     = 0;
     static MONTH    = 1;
     static DAY      = 2;

@@ -45,6 +45,20 @@ class StormFile {
     // Constants
     REVISION =  '1.0';
 
+    // contents of the fields in the HURRDAT2 file
+    static YEAR     = 0;
+    static MONTH    = 1;
+    static DAY      = 2;
+    static TIME     = 3;    // an integer in 24 hour format, e.g. 600, 1200, etc.
+    static EVENT    = 4;    // e.g. landfall, etc.  Usually blank
+    static STATUS   = 5;    // e.g. HU, TS, etc.
+    static LAT      = 6;    // in degrees with sign
+    static LON      = 7;    // in degrees with sign
+    static MAXWIND  = 8;    // in knots
+    static MINPRESS = 9;    // in mb
+
+    static MISSING  = -999;
+
     // constructor
     constructor () {
         this.stormFile = undefined;
@@ -72,6 +86,8 @@ class StormFile {
             // Parse JSON string into object
             try {
                 stormThis.jsonData = JSON.parse(response);
+
+                stormThis.validateStorms();
 
                 if (stormThis.pruneStorms()) {
                     stormThis.stormsLoaded();
@@ -120,15 +136,18 @@ class StormFile {
     }
 
     /**
-     * Walk through the JSON data and for each storm, remove any storm with 3
-     * or more consecutive entries with MISSING data. For storms with missing data (<3)
+     * Walk through the JSON data and for each storm, remove any storm with
+     * consecutive entries with MISSING data. For storms with missing data
      * interpolate the missing data.
      */
-    dumpStorms () {
+    validateStorms () {
 
-        for ( var i in this.jsonData.storms ) {
-            var storm = this.jsonData.storms[i];
-
+        for ( let i in this.jsonData.storms ) {
+            let storm = this.jsonData.storms[i];
+            console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
+            for ( let n in storm.entries ) {
+                let entry = storm.entries[n];
+           }
         }
     }
     /**
@@ -166,20 +185,12 @@ class StormFile {
         // this.fillMissingValuesByCol( storm, StormData.LAT);
         //this.fillMissingValuesByCol( storm, StormData.LON);
         //this.fillMissingValuesByCol( storm, StormData.MAXWIND);
-        this.fillMissingValuesByCol( storm, StormData.MINPRESS);
+        this.fillMissingValuesByCol( storm, StormFile.MINPRESS);
     }
 
     linearInterp ( entries, col ) {
 
-        if (index < 1 || index >= entries.length)
-            return false;
 
-        if ( entries[index-1][col] !== StormData.MISSING || entries[index+1][col] !== StormData.MISSING )
-            return false;
-
-        var t = entries[index-1][col] + t * (entries[index-+1][col] - entries[index-1][col])
-
-        entries[index][col] = entries[index-1][col] + t * (entries[index+1][col] - entries[index-1][col])
     }
 
     /**
@@ -195,7 +206,7 @@ class StormFile {
         while ( this.getNextEntry() ) {
 
             var curEnt = entries[this.index];
-            if (curEnt[col] === StormData.MISSING) {
+            if (curEnt[col] === StormFile.MISSING) {
                 console.log("Handling missing value here");
                 if (this.linearInterp( curEnt, col )) {
 
@@ -224,12 +235,12 @@ class StormFile {
      * @returns {Date}
      */
     getUTCDate ( entry ) {
-        var hours = Math.floor( entry[StormData.TIME] / 100 );
-        var minutes  = entry[StormData.TIME] % 100;
+        var hours = Math.floor( entry[StormFile.TIME] / 100 );
+        var minutes  = entry[StormFile.TIME] % 100;
         return new Date( Date.UTC(
-            entry[StormData.YEAR],
-            entry[StormData.MONTH],
-            entry[StormData.DAY],
+            entry[StormFile.YEAR],
+            entry[StormFile.MONTH],
+            entry[StormFile.DAY],
             hours,
             minutes));
     }

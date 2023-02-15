@@ -15,6 +15,17 @@ class HurrPlot  {
     // Constants
     static REVISION = '1.0';
 
+    // ----- Constants ------
+    static SAFFIR =  [
+        {cat: '5', minMPH: 157, color: 0xff6060},
+        {cat: '4', minMPH: 130, color: 0xff8f20},
+        {cat: '3', minMPH: 111, color: 0xffc140},
+        {cat: '2', minMPH: 96, color: 0xffe775},
+        {cat: '1', minMPH: 74, color: 0xffffcc},
+        {cat: 'TS', minMPH: 39, color: 0x01faf4},
+        {cat: 'TD', minMPH: 33, color: 0x5dbaff}
+    ];
+
     static  fThis = this;
 
     // Constructor
@@ -91,12 +102,25 @@ class HurrPlot  {
      *
      */
     createSaffirMat () {
-        var storm = new StormData();
-        for (var i = 0; i < StormData.SAFFIR.length; i++) {
-            this.saffirMat[i] = new THREE.MeshLambertMaterial({color: StormData.SAFFIR[i].color});
+        //var storm = new StormData();
+        for (var i = 0; i < HurrPlot.SAFFIR.length; i++) {
+            this.saffirMat[i] = new THREE.MeshLambertMaterial({color: HurrPlot.SAFFIR[i].color});
         }
     }
 
+    /**
+     * Return the Saffir-Simpson category for the specified windspeed, in MPH
+     * @param windSpeed
+     * @returns {*}
+     */
+    getSaffirCat (windSpeed) {
+        for (var i = 0; i < HurrPlot.SAFFIR.length - 1; i++) {
+            if (windSpeed >= HurrPlot.SAFFIR[i].minMPH)
+                break;
+        }
+
+        return i;
+    }
     //////////////
     /**
      * Create the sphere mesh and wrap it with the image

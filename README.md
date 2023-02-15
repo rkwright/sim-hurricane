@@ -1,11 +1,11 @@
 # sim-hurricane
-An exploration of simulating the behaviour of hurricanes. Based on the work of Greg Holland (published in Monthly Weather Review).  This code was originally written in Fortran-77 (!) by Michael Drayton and has previously  been ported (by the author) to C++ with graphics in OpenGL.  This implementation is written in modern JavaScript (but not ES6) and uses WebGL (three.js) for graphics.
+An exploration of simulating the behaviour of hurricanes. Based on the work of Greg Holland (published in Monthly Weather Review).  This code was originally written in Fortran-77 (!) by Michael Drayton and has previously  been ported (by the author) to C++ with graphics in OpenGL.  This implementation is written in modern JavaScript (ES6) and uses WebGL (three.js) for graphics.
 
 *Note that this port is very much a work-in-progress.  It does not yet work.*
 
 #### Overview
 
-This is a simple time-stepping model of hurricanes based on the work of Greg Holland,. The original paper is http://journals.ametsoc.org/doi/pdf/10.1175/1520-0493%281980%29108%3C1212%3AAAMOTW%3E2.0.CO%3B2
+This is a simple time-stepping model of hurricanes based on the work of Greg Holland,. The original paper is [here](http://journals.ametsoc.org/doi/pdf/10.1175/1520-0493%281980%29108%3C1212%3AAAMOTW%3E2.0.CO%3B2). 
 
 
 
