@@ -30,10 +30,21 @@ class HurrGui  {
     }
 
     /**
+     *
+     */
+    setupDatGui = () => {
+
+        this.setupGui();
+        this.setupYearsGui();
+        this.setupStormsGui();
+        this.setupEntriesGui();
+    }
+
+    /**
      * Set up the datgui controls on the basis of the loaded storm data
      */
-    setupStormsGui = () => {
-        this.stormsGui = this.gui.addFolder("Storms");
+    setupGui = () => {
+        this.hurrGui = this.gui.addFolder("Hurricanes");
 
         this.years = this.stormFile.getYearsWithStorms();
         this.storms = this.stormFile.getStormsForYear(this.years[0]);
@@ -42,7 +53,7 @@ class HurrGui  {
         this.entryLabels = this.getEntryLabels(this.storms[0]);
 
         //this.yearsparmsGui = this.gui.addFolder("Storms");
-
+/*
         this.stormOptions.year = this.years[0];
         this.stormOptions.stormLabels = this.stormLabels[0];
         this.stormOptions.entryLabels = this.entryLabels[0];
@@ -60,6 +71,35 @@ class HurrGui  {
         this.updateButton();
 
         this.stormsGui.open();
+        */
+
+    }
+
+    /**
+     * Set up the years gui
+     */
+    setupYearsGui = () => {
+        this.yearsGui = this.gui.addFolder("Years");
+
+        this.yearsGui.open();
+    }
+
+    /**
+     * Set up the storms gui
+     */
+    setupStormsGui = () => {
+        this.stormsGui = this.gui.addFolder("Storms");
+
+        this.stormsGui.open();
+    }
+
+    /**
+     * Set up the entries gui
+     */
+    setupEntriesGui = () => {
+        this.yearsGui = this.gui.addFolder("Entries");
+
+        this.yearsGui.open();
     }
 
     /**
@@ -126,57 +166,6 @@ class HurrGui  {
         gThis.updateButton();
     }
 
-    /**
-     * Remove and renew the update "button"
-     */
-    updateButton () {
-       if (this.updateButton.gui !== undefined)
-           this.stormsGui.remove(this.updateButton.gui);
-
-       this.updateButton.gui = this.stormsGui.add(this.stormOptions, 'update');
-      this.stormOptions.update = function () {
-          window.gThis.updateCallback( window.gThis.curStorm );
-      };
-    }
-
-
-    /**
-     * Remove and renew the update "button"
-     */
-    runButton () {
-        if (this.runButton.gui !== undefined)
-            this.parmsGui.remove(this.runButton.gui);
-
-        this.runButton.gui = this.parmsGui.add(this.parmOptions, 'run');
-        this.parmOptions.run = function () {
-            window.gThis.runCallback( window.gThis.curStorm );
-        };
-    }
-
-    /**
-     * Set up the datgui controls on the basis of the loaded storm data
-     */
-    setupParmsGui = () => {
-        this.parmsGui = this.gui.addFolder("Parms");
-
-        this.parmsGui.open();
-    }
-
-    /**
-     * Set up the datgui controls on the basis of the loaded storm data
-     */
-    setupParmsGui = () => {
-        this.parmsGui = this.gui.addFolder("Parms");
-
-        this.parmsGui.open();
-    }
-    setupDatGui = () => {
-
-        // currently, we have to call the methods in the below order otherwise it crashes?!
-        this.setupParmsGui();
-        this.setupYearsGui();
-        this.setupStormsGui();
-     }
     /**
      * For each storm, fetch the ATCID and Name, concatenate them and add
      * them to the array
