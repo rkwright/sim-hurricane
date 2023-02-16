@@ -21,10 +21,6 @@ class HurrGui  {
         this.runCallback = runCallback;
 
         this.stormOptions = {};
-        this.curStorm = undefined;
-        this.storms = undefined;
-
-        this.parmOptions = {};
 
         window.gThis = this;
     }
@@ -38,6 +34,8 @@ class HurrGui  {
         this.setupYearsGui();
         this.setupStormsGui();
         this.setupEntriesGui();
+
+        this.updateYears(this.curStorm.entries[0][StormFile.YEAR]);
     }
 
     /**
@@ -52,27 +50,12 @@ class HurrGui  {
         this.stormLabels = this.getStormLabels(this.storms);
         this.entryLabels = this.getEntryLabels(this.storms[0]);
 
-        //this.yearsparmsGui = this.gui.addFolder("Storms");
-/*
         this.stormOptions.year = this.years[0];
         this.stormOptions.stormLabels = this.stormLabels[0];
         this.stormOptions.entryLabels = this.entryLabels[0];
         this.stormOptions.update = function () {
             window.gThis.updateCallback( window.gThis.curStorm );
-        };
-
-
-        this.stormsGui.add(this.stormOptions, "year", this.years).name("Year").onChange(this.yearChange);
-
-        this.updateStorms(this.stormOptions.year);
-
-        this.updateEntries(this.curStorm);
-
-        this.updateButton();
-
-        this.stormsGui.open();
-        */
-
+        }
     }
 
     /**
@@ -80,7 +63,6 @@ class HurrGui  {
      */
     setupYearsGui = () => {
         this.yearsGui = this.gui.addFolder("Years");
-
         this.yearsGui.open();
     }
 
@@ -89,7 +71,6 @@ class HurrGui  {
      */
     setupStormsGui = () => {
         this.stormsGui = this.gui.addFolder("Storms");
-
         this.stormsGui.open();
     }
 
@@ -97,27 +78,49 @@ class HurrGui  {
      * Set up the entries gui
      */
     setupEntriesGui = () => {
-        this.yearsGui = this.gui.addFolder("Entries");
-
-        this.yearsGui.open();
+        this.entriesGui = this.gui.addFolder("Entries");
+        this.entriesGui.open();
     }
 
     /**
-     * Update the existing controller for storms and create a new one.
+     * Update the existing controller for years and create a new one.
+     * Have to do it this way as there appears to be no easy way to
+     * "refresh" the data in a controller
+     */
+    updateYears (year) {
+        if (this.yearsGui.gui !== undefined)
+            this.hurrGui.remove(this.yearsGui.gui);
+
+        this.yearsGui.add(this.stormOptions, "year", this.years).name("Years").onChange(this.yearChange);
+    }
+
+    /**
+     * Handle change in the year combo-box
+     */
+    yearChange () {
+        console.log("Changed year");
+
+        var gThis = window.gThis;
+        gThis.updateStorms(gThis.stormOptions.year);
+        gThis.updateEntries(gThis.storms[0]);
+    }
+
+    /**
+     * Update the existing controller for years and create a new one.
      * Have to do it this way as there appears to be no easy way to
      * "refresh" the data in a controller
      */
     updateStorms (year) {
-        if (this.updateStorms.gui !== undefined)
-            this.stormsGui.remove(this.updateStorms.gui);
+        if (this.stormsGui.gui !== undefined)
+            this.hurrGui.remove(this.stormsGui.gui);
 
         this.storms = this.stormFile.getStormsForYear(Number(year));
         this.curStorm = this.storms[0];
         this.stormLabels = this.getStormLabels(this.storms);
         this.stormOptions.stormLabels = this.stormLabels[0];
 
-        this.updateStorms.gui = this.stormsGui.add(this.stormOptions, "stormLabels", this.stormLabels).name("Storms");
-        this.updateStorms.gui.onChange(this.stormsChange);
+        this.stormsGui.gui = this.stormsGui.add(this.stormOptions, "stormLabels", this.stormLabels).name("Storms");
+        this.stormsGui.gui.onChange(this.stormsChange);
     }
 
     /**
@@ -132,17 +135,17 @@ class HurrGui  {
         //gThis.updateCallback( gThis.curStorm );
     }
 
-    /**
+    /*
      * Update existing controller for the entries and create a new one
      */
     updateEntries (storm) {
-        if (this.gui !== undefined)
-            this.stormsGui.remove(this.updateStorms.gui);
+        if (this.entriesGui.gui !== undefined)
+            this.hurrGui.remove( this.entriesdGui.gui );
 
         this.entryLabels = this.getEntryLabels(storm);
         this.stormOptions.entryLabels = this.entryLabels[0];
 
-        this.gui = this.stormsGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries");
+        this.entriesGui = this.hurrGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries");
         this.gui.onChange(this.entriesChange);
     }
 
@@ -154,17 +157,7 @@ class HurrGui  {
         gThis.entryLabels.indexOf( gThis.stormOptions.entryLabels );
     }
 
-    /**
-     * Handle change in the year combo-box
-     */
-    yearChange () {
-        console.log("Changed year");
 
-        var gThis = window.gThis;
-        gThis.updateStorms(gThis.stormOptions.year);
-        gThis.updateEntries(gThis.storms[0]);
-        gThis.updateButton();
-    }
 
     /**
      * For each storm, fetch the ATCID and Name, concatenate them and add
