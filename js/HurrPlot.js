@@ -36,7 +36,7 @@ class HurrPlot  {
             cameraPos : [4, 3, 4],
             controls:true,
             datgui:true,
-            guiWidth:350,
+            guiWidth:400,
             displayStats:true});
 
         this.saffirMat = [];
@@ -86,7 +86,7 @@ class HurrPlot  {
         // tell the hurricane model to update itself and call back to render when it can
         //hurrModel.timeStep();
 
-        window.plotObj.earthMesh.rotation.y += 0.005;
+        window.plotObj.earthMesh.rotation.y += 0.001;
 
         // Map the 3D scene down to the 2D screen (render the frame)
         this.gfxScene.renderScene();
