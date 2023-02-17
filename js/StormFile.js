@@ -132,7 +132,7 @@ class StormFile {
 
         for ( let i in this.jsonData.storms ) {
             let storm = this.jsonData.storms[i];
-            console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
+            //console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
             for ( let n in storm.entries ) {
                 let entry = storm.entries[n];
            }

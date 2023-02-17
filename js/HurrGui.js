@@ -37,6 +37,7 @@ class HurrGui  {
 
         this.updateYears(this.curStorm.entries[0][StormFile.YEAR]);
         this.updateStorms(this.curStorm.entries[0][StormFile.YEAR]);
+        this.updateEntries(this.storms[0]);
     }
 
     /**
@@ -57,6 +58,8 @@ class HurrGui  {
   //      this.stormOptions.update = function () {
   //          window.gThis.updateCallback( window.gThis.curStorm );
   //      }
+
+        this.hurrGui.open();
     }
 
     /**
@@ -79,8 +82,8 @@ class HurrGui  {
      * Set up the entries gui
      */
     setupEntriesGui = () => {
-        this.entriesGui = this.gui.addFolder("Entries");
-        this.entriesGui.open();
+      //  this.entriesGui = this.gui.addFolder("Entries");
+      //  this.entriesGui.open();
     }
 
     /**
@@ -89,8 +92,10 @@ class HurrGui  {
      * "refresh" the data in a controller
      */
     updateYears (year) {
-        if (this.yearsGui !== undefined && this.yearsGui.gui !== undefined)
-            this.hurrGui.remove(this.yearsGui.gui);
+        if (this.yearsGui !== undefined ) {
+            this.hurrGui.remove(this.yearsGui);
+            console.log(this.yearsGui);
+        }
 
         this.yearsGui = this.hurrGui.add(this.stormOptions, "year", this.years).name("Years").onChange(this.yearChange);
     }
@@ -112,8 +117,8 @@ class HurrGui  {
      * "refresh" the data in a controller
      */
     updateStorms (year) {
-        if (this.stormsGui !== undefined && this.stormsGui.gui !== undefined)
-            this.hurrGui.remove(this.stormsGui.gui);
+        if (this.stormsGui !== undefined)
+            this.hurrGui.remove(this.stormsGui);
 
         this.storms = this.stormFile.getStormsForYear(Number(year));
         this.curStorm = this.storms[0];
@@ -131,22 +136,19 @@ class HurrGui  {
         var index = gThis.stormLabels.indexOf( gThis.stormOptions.stormLabels );
         gThis.curStorm = gThis.storms[index];
         gThis.updateEntries( gThis.curStorm );
-        gThis.updateButton();
-        //gThis.updateCallback( gThis.curStorm );
     }
 
     /*
      * Update existing controller for the entries and create a new one
      */
     updateEntries (storm) {
-        if (this.entriesGui.gui !== undefined)
-            this.hurrGui.remove( this.entriesdGui.gui );
+        if (this.entriesGui !== undefined)
+            this.hurrGui.remove( this.entriesGui );
 
         this.entryLabels = this.getEntryLabels(storm);
         this.stormOptions.entryLabels = this.entryLabels[0];
 
-        this.entriesGui = this.hurrGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries");
-        this.gui.onChange(this.entriesChange);
+        this.entriesGui = this.hurrGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries").onChange(this.entriesChange);
     }
 
     /**
@@ -156,8 +158,6 @@ class HurrGui  {
         var gThis = window.gThis;
         gThis.entryLabels.indexOf( gThis.stormOptions.entryLabels );
     }
-
-
 
     /**
      * For each storm, fetch the ATCID and Name, concatenate them and add
