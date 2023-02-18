@@ -58,7 +58,7 @@ class StormFile {
     static MINPRESS = 9;    // in mb
 
     static MISSING  = -999;
-    static YEAR0 = 1851;
+    static YEARZERO = 1851;
 
     // constructor
     constructor () {
@@ -126,8 +126,8 @@ class StormFile {
 
     /**
      * Walk through the JSON data and for each storm, remove any storm with
-     * consecutive entries with MISSING data. For storms with missing data
-     * interpolate the missing data.
+     * consecutive entries with MISSING data. For storms with single instancess of
+     * missing data interpolate the missing data.
      */
     validateStorms () {
 
@@ -136,9 +136,10 @@ class StormFile {
             //console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
             let t0 = this.getStormTime( storm.entries[0] );
             let t1 = this.getStormTime( storm.entries[storm.entries.length-1] );
+            let stormLen = t1 - t0;
             for ( let n in storm.entries ) {
                 let entry = storm.entries[n];
-
+                entry.tProp = ( this.getStormTime(entry) - t0 ) / stormLen;
            }
         }
 
@@ -152,10 +153,10 @@ class StormFile {
      */
     getStormTime ( entry ) {
         let hours = Math.floor( entry[StormFile.TIME] / 100 );
-        let years = entry[StormFile.YEAR] - StormFile.YEAR0;
+        let years = entry[StormFile.YEAR] - StormFile.YEARZERO;
         let julian = new Julian();
         let jDays = julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);
-        return years * (24*365) + jDays * 24;
+        return years * (24*365) + hours +  jDays * 24;
     }
 
     /**
