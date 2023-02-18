@@ -58,6 +58,7 @@ class StormFile {
     static MINPRESS = 9;    // in mb
 
     static MISSING  = -999;
+    static YEAR0 = 1851;
 
     // constructor
     constructor () {
@@ -133,12 +134,28 @@ class StormFile {
         for ( let i in this.jsonData.storms ) {
             let storm = this.jsonData.storms[i];
             //console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
+            let t0 = this.getStormTime( storm.entries[0] );
+            let t1 = this.getStormTime( storm.entries[storm.entries.length-1] );
             for ( let n in storm.entries ) {
                 let entry = storm.entries[n];
+
            }
         }
 
         return true;
+    }
+
+    /**
+     * Calculate the number of hours since January 1, 1851
+     * @param entry
+     * @returns {number}
+     */
+    getStormTime ( entry ) {
+        let hours = Math.floor( entry[StormFile.TIME] / 100 );
+        let years = entry[StormFile.YEAR] - StormFile.YEAR0;
+        let julian = new Julian();
+        let jDays = julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);
+        return years * (24*365) + jDays * 24;
     }
 
     /**
@@ -153,17 +170,16 @@ class StormFile {
     /**
      * Given a NASA-style UNIX date, return the JavaScript UTC date object
      * @param entry
+     * @param t0
+     * @param t1
      * @returns {Date}
      */
-    getUTCDate ( entry ) {
+    getTimeAndDate ( entry, t0, t1 ) {
         var hours = Math.floor( entry[StormFile.TIME] / 100 );
-        var minutes  = entry[StormFile.TIME] % 100;
-        return new Date( Date.UTC(
-            entry[StormFile.YEAR],
-            entry[StormFile.MONTH],
-            entry[StormFile.DAY],
-            hours,
-            minutes));
+        return new Date( Date.UTC( entry[StormFile.YEAR],
+                                   entry[StormFile.MONTH],
+                                   entry[StormFile.DAY],
+                                   hours,0));
     }
 
     /**
