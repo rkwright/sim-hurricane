@@ -134,16 +134,41 @@ class StormFile {
         for ( let i in this.jsonData.storms ) {
             let storm = this.jsonData.storms[i];
             //console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
+
             let t0 = this.getStormTime( storm.entries[0] );
             let t1 = this.getStormTime( storm.entries[storm.entries.length-1] );
             let stormLen = t1 - t0;
+            let missing = -1;
+
             for ( let n in storm.entries ) {
                 let entry = storm.entries[n];
                 entry.tProp = ( this.getStormTime(entry) - t0 ) / stormLen;
-           }
+
+                if (this.checkForMissing( storm.entries, n )) {
+                    console.log("Missing data, dropping entry: " + n + storm.atcID + ": " + storm.name);
+                    missing = n;
+                    break;
+                }
+            }
+
+            // if we detected missing data, delete this storm
+            if (missing !== -1) {
+                this.jsonData.storms.splice( missing, 1)
+            }
+
         }
 
         return true;
+    }
+
+    /**
+     * Check for any missing entries.  If found and the missing value cannot be interpolated
+     * then return true. Else interpolate the missing value and return false
+     * @param entry
+     * @param n
+     */
+    checkForMissing ( entries, n ) {
+        return n==1;
     }
 
     /**
