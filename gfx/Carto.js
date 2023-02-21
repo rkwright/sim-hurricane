@@ -34,6 +34,9 @@ class Carto  {
     latLonToXYZ  (lat, lon, radius ) {
        // var radius = Carto.EARTH_DIAMETER;
 
+        lat = Math.toRad(lat);
+        lon = Math.toRad(lon);
+
         // this trasform from https://stackoverflow.com/questions/28365948/javascript-\
         // latitude-longitude-to-xyz-position-on-earth-threejs
         var phi   = Math.PI/2 - lat;

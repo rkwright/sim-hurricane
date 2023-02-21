@@ -88,7 +88,7 @@ class HurrPlot  {
         // tell the hurricane model to update itself and call back to render when it can
         //hurrModel.timeStep();
 
-        window.plotObj.earthMesh.rotation.y += 0.001;
+        //window.plotObj.earthMesh.rotation.y += 0.001;
 
         // Map the 3D scene down to the 2D screen (render the frame)
         this.gfxScene.renderScene();
@@ -131,7 +131,7 @@ class HurrPlot  {
      * - generate a tube geometry using that curve, returns the resulting geometry
      */
     plotStormTrack ( curStorm ) {
-        const TRACK_DIA = 0.03;
+        const TRACK_DIA = 0.01;
         var gcGen = new GreatCircle();
         var points;
         var startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
@@ -182,7 +182,7 @@ class HurrPlot  {
      * Create a sphere to form the "round join" between sections of the track
      */
     roundJoin (lat, lon, mat) {
-        const TRACK_DIA = 0.03;
+        const TRACK_DIA = 0.01;
         var join = new THREE.SphereGeometry(TRACK_DIA, 32, 32);
 
         var xyz = this.carto.latLonToXYZ(lat, lon, 2.0);
