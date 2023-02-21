@@ -25,13 +25,38 @@
     <script src="js/StormFile.js"></script>orm
     <script src="js/HurrGui.js"></script>
 
+    <style>
+        .btn {
+            border: 1px  solid darkgray;
+            background-color: lightgray;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .vcr {
+            border: 1px  solid lightgray;
+            float: right;
+            z-index:1000;
+            padding: 10px 10px
+        }
+    </style>
 </head>
 <body>
+<!-- set up the VCR controls -->
+<div id="vcrDiv" class="vcr">
+    <label>Track
+        <input type="checkbox" id="showTrack"  onclick="showTrack()">
+    </label>
+    &nbsp;&nbsp;
+    <button class="btn" onclick="stopVCR()">Stop</button>
+    <button class="btn" onclick="playVCR()">Play</button>
+    <button class="btn" onclick="pauseVCR()">Pause</button>
+</div>
 
 <script>
-    this.hurrPlot;
-    this.stormFile;
-    this.hurrGui;
 
     // then initialize our demo's stuff
     initializeDemo();
@@ -77,6 +102,25 @@
         // Start the animation
         //animateScene();
     }
+
+    function showTrack() {
+        console.log("Show Track!");
+        let checkbox = document.getElementById('showTrack');
+        console.log("Checkbox is " + ((checkbox.checked === true) ? "" : " not") + "checked");
+    }
+
+    function stopVCR() {
+        console.log("Stop!");
+    }
+
+    function playVCR() {
+        console.log("Play!");
+    }
+
+    function pauseVCR() {
+        console.log("Pause?");
+    }
+
 </script>
 
 </body>
