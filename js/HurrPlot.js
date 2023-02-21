@@ -44,6 +44,8 @@ class HurrPlot  {
 
         this.earthGlobe = new THREE.SphereGeometry(2,32,32);
 
+        this.carto = new Carto();
+
         window.plotObj = this;
     }
 
@@ -56,7 +58,7 @@ class HurrPlot  {
     createGlobeMat ( callBack, pThis ) {
         var textureLoader = new THREE.TextureLoader();
         //var bumpLoader = new THREE.TextureLoader();
-        var material = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: true, opacity: 0.75});
+        var material = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: false, opacity: 0.75});
         textureLoader.load("images/8081-earthmap8k.jpg", function (texture) {
             material.map = texture;
             material.needsUpdate = true;
@@ -129,28 +131,29 @@ class HurrPlot  {
      * - generate a tube geometry using that curve, returns the resulting geometry
      */
     plotStormTrack ( curStorm ) {
+        const TRACK_DIA = 0.03;
         var gcGen = new GreatCircle();
         var points;
-        var startLL = {lat: curStorm.entries[0][STORMDATA.LAT], lon: curStorm.entries[0][STORMDATA.LON]};
+        var startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
         var endLL = {};
-        var scale = 2 / CARTO.EARTH_DIAMETER;
+        var scale = 2.0 / Carto.EARTH_DIAMETER;
         var xyz;
         var plot = window.plotObj;
 
-        var saffirCat = stormData.getSaffirCat(curStorm.entries[0][STORMDATA.MAXWIND]);
+        var saffirCat = plot.getSaffirCat(curStorm.entries[0][StormFile.MAXWIND]);
         var mat = plot.saffirMat[saffirCat];
 
-        plot.roundJoin(startLL.lat, startLL.lon, scale, mat);
+        plot.roundJoin(startLL.lat, startLL.lon, mat);
 
         console.log(" LL: " + startLL.lat + ", " + startLL.lon);
 
         for (var i = 1; i < curStorm.entries.length; i++) {
-            endLL = {lat: curStorm.entries[i][STORMDATA.LAT], lon: curStorm.entries[i][STORMDATA.LON]};
+            endLL = {lat: curStorm.entries[i][StormFile.LAT], lon: curStorm.entries[i][StormFile.LON]};
 
-            saffirCat = stormFile.getSaffirCat(curStorm.entries[i][STORMDATA.MAXWIND]);
+            saffirCat = plot.getSaffirCat(curStorm.entries[i][StormFile.MAXWIND]);
             mat = plot.saffirMat[saffirCat];
 
-            plot.roundJoin(endLL.lat, endLL.lon, scale, mat);
+            plot.roundJoin(endLL.lat, endLL.lon, mat);
 
             console.log(" LL: " + endLL.lat + ", " + endLL.lon);
 
@@ -160,7 +163,7 @@ class HurrPlot  {
             var track = [];
 
             for (var j = 0; j < pts.length; j++) {
-                xyz = carto.latLonToXYZ(pts[j][1], pts[j][0], CARTO.EARTH_DIAMETER, scale);
+                xyz = this.carto.latLonToXYZ(pts[j][1], pts[j][0], 2.0);
                 track.push(xyz);
                 console.log("xyz: " + xyz.x.toFixed(2) + " " + xyz.y.toFixed(2) + " " + xyz.z.toFixed(2));
             }
@@ -178,14 +181,15 @@ class HurrPlot  {
     /**
      * Create a sphere to form the "round join" between sections of the track
      */
-    roundJoin (lat, lon, scale, mat) {
+    roundJoin (lat, lon, mat) {
+        const TRACK_DIA = 0.03;
         var join = new THREE.SphereGeometry(TRACK_DIA, 32, 32);
 
-        var xyz = carto.latLonToXYZ(lat, lon, CARTO.EARTH_DIAMETER, scale);
+        var xyz = this.carto.latLonToXYZ(lat, lon, 2.0);
 
         var mesh = new THREE.Mesh(join, mat);
         mesh.position.set(xyz.x, xyz.y, xyz.z);
-        gfxScene.add(mesh);
+        this.gfxScene.add(mesh);
     }
 
     /**

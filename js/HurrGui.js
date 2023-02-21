@@ -55,9 +55,6 @@ class HurrGui  {
         this.stormOptions.year = this.years[0];
         this.stormOptions.stormLabels = this.stormLabels[0];
         this.stormOptions.entryLabels = this.entryLabels[0];
-  //      this.stormOptions.update = function () {
-  //          window.gThis.updateCallback( window.gThis.curStorm );
-  //      }
 
         this.hurrGui.open();
     }
@@ -136,6 +133,14 @@ class HurrGui  {
         var index = gThis.stormLabels.indexOf( gThis.stormOptions.stormLabels );
         gThis.curStorm = gThis.storms[index];
         gThis.updateEntries( gThis.curStorm );
+    }
+
+    /**
+     * Simple access to the currently selected storm
+     * @returns {*}
+     */
+    getCurrentStorm() {
+        return gThis.curStorm;
     }
 
     /*

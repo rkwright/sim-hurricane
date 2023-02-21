@@ -10,36 +10,29 @@
 /**
  * Constants
  */
-var Carto = {
-    revision: '1.0',
-    METERPERDEG: 111195.0,  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
-    EARTH_DIAMETER: 12742.0,// per NASA
+class Carto  {
+    static revision = '1.0';
+    static METERPERDEG = 111195.0;  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
+    static EARTH_DIAMETER = 12742.0; // per NASA
 
-    radius_major:6378137.0,         // Equatorial Radius, WGS84
-    radius_minor:6356752.314245179, // defined as constant
-    f:298.257223563                 // 1/f=(a-b)/a , a=r_major, b=r_minor
-};
+    static radius_major = 6378137.0;         // Equatorial Radius, WGS84
+    static radius_minor = 6356752.314245179; // defined as constant
+    static f = 298.257223563;               // 1/f=(a-b)/a , a=r_major, b=r_minor
 
-/**
- * Pseudo constructor
- * @constructor
- */
-Carto = function () {
+    constructor () {
 
-};
-
-Carto.prototype = {
+    }
 
     /**
      * transform from lat/lon to 3D x,y,z in meters relative to the centre of the earth.
      * Assumes Earth is a perfect sphere, but close enough for most uses.
      * @param lat
      * @param lon
-     * @param elev
+     * @param radius
      * @returns {Vector3|*}
      */
-    transform: function (lat, lon, elev ) {
-        var radius = Carto.EARTH_DIAMETER;
+    latLonToXYZ  (lat, lon, radius ) {
+       // var radius = Carto.EARTH_DIAMETER;
 
         // this trasform from https://stackoverflow.com/questions/28365948/javascript-\
         // latitude-longitude-to-xyz-position-on-earth-threejs
@@ -50,7 +43,7 @@ Carto.prototype = {
         var y = (radius * Math.cos(phi));
 
         return new THREE.Vector3(x,y,z);
-    },
+    }
 
     /**
      * Routine to convert the cartesian coordinates (x1,y1) - with origin
@@ -65,14 +58,15 @@ Carto.prototype = {
      * @return polar -  radial distance
      *                  theta - angle CW from north (in radians)
      */
-    cartesianToPolarNorth: function ( x0, y0, x1, y1 ) {
+    cartesianToPolarNorth ( x0, y0, x1, y1 ) {
         var polar = new THREE.Spherical(0,0,0);
 
         polar.dist  = this.degreesToMeters( x0, y0, x1, y1 );
         polar.theta = this.findHeading( x0, y0, x1, y1 );
 
         return polar;
-    },
+    }
+
     /**
      * Given two coordinates in degrees, find the heading from the first to the
      * second by the shortest great circle distance
@@ -84,8 +78,7 @@ Carto.prototype = {
      * Return:			heading in degrees where N = 0, NW = 45 and so on
      *
      */
-
-    findHeading: function ( lon1Deg, lat1Deg, lon2Deg, lat2Deg ) {
+    findHeading ( lon1Deg, lat1Deg, lon2Deg, lat2Deg ) {
         var	lat1,lon1;
         var	lat2,lon2;
         var	heading;
@@ -108,7 +101,7 @@ Carto.prototype = {
         headingDeg = Math.toDeg( heading );
 
         return headingDeg;
-    },
+    }
 
     /**
      * Return the distance in meters between two points in lat/lon.
@@ -119,7 +112,7 @@ Carto.prototype = {
      * @param lat2Deg
      * @returns {*}
      */
-    degreesToMeters: function ( lon1Deg, lat1Deg, lon2Deg, lat2Deg ) {
+    degreesToMeters ( lon1Deg, lat1Deg, lon2Deg, lat2Deg ) {
         if ( lat1Deg === lat2Deg && lon1Deg === lon2Deg )
             return 0.0;
 
@@ -136,7 +129,7 @@ Carto.prototype = {
         var	distRad = Math.acos(Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(lon1-lon2));
 
         return this.degToMeters( Math.toDeg(distRad) );
-    },
+    }
 
     /**
      *   Given a coordinate, heading and distance travelled, finds the new coordinates
@@ -145,8 +138,7 @@ Carto.prototype = {
      *				  distance - in meters
      *			  newLat, newLon - resulting coordinate, in degrees
      */
-
-    metersToDegrees: function ( lonDeg,	latDeg,	heading, dist )  {
+    metersToDegrees ( lonDeg,	latDeg,	heading, dist )  {
 
         var	lat,lon;
         var	newLat,newLon;
@@ -184,30 +176,28 @@ Carto.prototype = {
             newDist = DEG_TO_METERS(RAD2DEG(newDist));
             ASSERT(fabs(newDist-dist) < 100.0);
         */
-    },
-
+    }
 
     /**
      * These methods assume a perfectly spherical earth
      */
-    metersToDeg: function (m) {
+    metersToDeg (m) {
         return m / Carto.METERPERDEG;
-    },
+    }
 
-    degToMeters: function (d) {
+    degToMeters (d) {
         return d * Carto.METERPERDEG;
-    },
+    }
 
     // AZIM2MATHR(azim) ((PI+HALF_PI)-azim)
-    azimuthToRadians: function ( azim ) {
+    azimuthToRadians ( azim ) {
         return (Math.PI * 1.5) - azim;
-    },
+    }
 
     // AZIM2MATHD(azim) ((450.0)-azim)
-    azimuthToDegrees: function ( azim ) {
-        return 450.0 - azimuth;
-    },
-
+    azimuthToDegrees ( azim ) {
+        return 450.0 - azim;
+    }
 
     /*
      * The following functions take args in degrees and return in meters (or vice versa)
@@ -215,7 +205,7 @@ Carto.prototype = {
      */
 
      // lat lon to mercator
-     latlonToMerc: function(lon,lat)
+     latlonToMerc (lon,lat)
         {
             //lat, lon in rad
             var x = Carto.radius_major * Math.toRad(lon);
@@ -239,9 +229,9 @@ Carto.prototype = {
             var y = 0 - Carto.radius_major * Math.log(ts);
 
            return { 'x' : x, 'y': y };
-        },
+        }
 
-        mercToLatLon: function(x,y) //mercator to lat lon
+        mercToLatLon (x,y) //mercator to lat lon
         {
             var lon = Math.toDeg((x / Carto.radius_major));
 
@@ -250,9 +240,9 @@ Carto.prototype = {
             var lat = Math.toDeg( this.pj_phi2( Math.exp( 0 - (y / Carto.radius_major)), e));
 
             return { 'lon' : lon, 'lat' : lat };
-        },
+        }
 
-        pj_phi2:function(ts, e)
+        pj_phi2 (ts, e)
         {
             var N_ITER = 15;
             var HALFPI = Math.PI/2;
@@ -280,4 +270,4 @@ Carto.prototype = {
     // var merc = this.latlonToMerc(47.6035525, 9.770602);         // output mercator.x, mercator.y
     // var latlon = this.mercToLatLon(5299424.36041, 1085840.05328);  // output latlon.lat, latlon.lon
 
-};
+}

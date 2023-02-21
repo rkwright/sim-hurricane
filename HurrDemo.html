@@ -81,6 +81,7 @@
 
         stormFile = new StormFile();
         stormFile.loadData( "data/hurdat2-1851-2016-041117.json", stormsLoaded );
+        console.log("Now what?");
     }
 
     /**
@@ -90,6 +91,11 @@
         hurrGui = new HurrGui( hurrPlot.gfxScene.gui, stormFile, hurrPlot.plotStormTrack, runStorm);
 
         hurrGui.setupDatGui();
+
+        let strm = hurrGui.getCurrentStorm();
+        console.log("current storm: " + strm);
+
+        hurrPlot.plotStormTrack( strm );
     }
 
     /**
