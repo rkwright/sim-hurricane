@@ -8,25 +8,25 @@
  * 16 (Spaces 11-12) – Hours in UTC (Universal Time Coordinate)
  * 55 (Spaces 13-14, before 2nd comma) – Minutes
  * L (Space 17, before 3rd comma) – Record identifier (see notes below)
- * C – Closest approach to a coast, not followed by a landfall
- * G – Genesis
- * I – An intensity peak in terms of both pressure and wind
- * L – Landfall (center of system crossing a coastline)
- * P – Minimum in central pressure
- * R – Provides additional detail on the intensity of the cyclone when rapid changes are underway
- * S – Change of status of the system
- * T – Provides additional detail on the track (position) of the cyclone
- * W – Maximum sustained wind speed
- * HU (Spaces 20-21, before 4th comma) – Status of system. Options are:
- * TD – Tropical cyclone of tropical depression intensity (< 34 knots)
- * TS – Tropical cyclone of tropical storm intensity (34-63 knots)
- * HU – Tropical cyclone of hurricane intensity (> 64 knots)
- * EX – Extratropical cyclone (of any intensity)
- * SD – Subtropical cyclone of subtropical depression intensity (< 34 knots)
- * SS – Subtropical cyclone of subtropical storm intensity (> 34 knots)
- * LO – A low that is neither a tropical cyclone, a subtropical cyclone, nor an extratropical cyclone (of any intensity)
- * WV – Tropical Wave (of any intensity)
- * DB – Disturbance (of any intensity)
+ *      C – Closest approach to a coast, not followed by a landfall
+ *      G – Genesis
+ *      I – An intensity peak in terms of both pressure and wind
+ *      L – Landfall (center of system crossing a coastline)
+ *      P – Minimum in central pressure
+ *      R – Provides additional detail on the intensity of the cyclone when rapid changes are underway
+ *      S – Change of status of the system
+ *      T – Provides additional detail on the track (position) of the cyclone
+ *      W – Maximum sustained wind speed
+ *  HU (Spaces 20-21, before 4th comma) – Status of system. Options are:
+ *      TD – Tropical cyclone of tropical depression intensity (< 34 knots)
+ *      TS – Tropical cyclone of tropical storm intensity (34-63 knots)
+ *      HU – Tropical cyclone of hurricane intensity (> 64 knots)
+ *      EX – Extratropical cyclone (of any intensity)
+ *      SD – Subtropical cyclone of subtropical depression intensity (< 34 knots)
+ *      SS – Subtropical cyclone of subtropical storm intensity (> 34 knots)
+ *      LO – A low that is neither a tropical cyclone, subtropical cyclone, nor extratropical cyclone (of any intensity)
+ *      WV – Tropical Wave (of any intensity)
+ *      DB – Disturbance (of any intensity)
  * 29.1 (Spaces 24-27) – Latitude
  * N (Space 28, before 5th comma) – Hemisphere – North or South
  * 90.2 (Spaces 31-35) – Longitude
@@ -42,7 +42,7 @@
 
 class StormFile {
 
-    // Constants
+    //--- Constants ---
     REVISION =  '1.1.0';
 
     // contents of the fields in the HURRDAT2 file
@@ -60,15 +60,13 @@ class StormFile {
     static MISSING  = -999;
     static YEARZERO = 1851;
 
-    // constructor
+    //--- class methods ---
+
     constructor () {
 
-        this.index = 0;
-
+        this.julian = new Julian();
         window.stormThis = this;
     }
-
-    // class methods
 
     /**
      * Load the data from the specified JSON file, then parse the resulting payload
@@ -85,18 +83,12 @@ class StormFile {
             try {
                 stormThis.jsonData = JSON.parse(response);
 
-                //stormThis.validateStorms();
-
                 if (stormThis.validateStorms()) {
                     stormThis.stormsLoaded();
                 }
 
             } catch (e) {
-                if (e instanceof SyntaxError) {
-                    console.error(e, true);
-                } else {
-                    console.error(e, false);
-                }
+                console.error(e, (e instanceof SyntaxError));
             }
         });
     }
@@ -131,9 +123,9 @@ class StormFile {
      */
     validateStorms () {
 
-        for ( let i in this.jsonData.storms ) {
+        let i = 0;
+        while ( i < this.jsonData.storms.length ) {
             let storm = this.jsonData.storms[i];
-            //console.log(storm.atcID + ": " + storm.name + " n: " + storm.entries.length);
 
             let t0 = this.getStormTime( storm.entries[0] );
             let t1 = this.getStormTime( storm.entries[storm.entries.length-1] );
@@ -142,10 +134,9 @@ class StormFile {
 
             for ( let n in storm.entries ) {
                 let entry = storm.entries[n];
-                entry.tProp = ( this.getStormTime(entry) - t0 ) / stormLen;
+                entry.tProp = stormLen > 0 ? ( this.getStormTime(entry) - t0 ) / stormLen : 0.0;
 
-                if (this.checkForMissing( storm.entries, n )) {
-                    console.log("Missing data, dropping entry: " + n + storm.atcID + ": " + storm.name);
+                if (this.checkForMissing( entry, storm.entries, n )) {
                     missing = n;
                     break;
                 }
@@ -153,9 +144,11 @@ class StormFile {
 
             // if we detected missing data, delete this storm
             if (missing !== -1) {
-                this.jsonData.storms.splice( missing, 1)
+                this.jsonData.storms.splice( i, 1)
+             }
+            else {
+                i++;
             }
-
         }
 
         return true;
@@ -165,32 +158,28 @@ class StormFile {
      * Check for any missing entries.  If found and the missing value cannot be interpolated
      * then return true. Else interpolate the missing value and return false
      * @param entry
-     * @param n
      */
-    checkForMissing ( entries, n ) {
-        return n==1;
+    checkForMissing ( entry ) {
+
+        for (let k in entry) {
+            if (entry[k] === StormFile.MISSING) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * Calculate the number of hours since January 1, 1851
+     * For this storm, calculate the number of hours since January 1, 1851
      * @param entry
      * @returns {number}
      */
     getStormTime ( entry ) {
         let hours = Math.floor( entry[StormFile.TIME] / 100 );
         let years = entry[StormFile.YEAR] - StormFile.YEARZERO;
-        let julian = new Julian();
-        let jDays = julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);
+        let jDays = this.julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);
         return years * (24*365) + hours +  jDays * 24;
-    }
-
-    /**
-     *
-     * @param entries
-     * @param col
-     */
-    linearInterp ( entries, col ) {
-
     }
 
     /**
@@ -200,7 +189,7 @@ class StormFile {
      * @param t1
      * @returns {Date}
      */
-    getTimeAndDate ( entry, t0, t1 ) {
+    getJSDate ( entry, t0, t1 ) {
         var hours = Math.floor( entry[StormFile.TIME] / 100 );
         return new Date( Date.UTC( entry[StormFile.YEAR],
                                    entry[StormFile.MONTH],
