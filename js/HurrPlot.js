@@ -145,7 +145,8 @@ class HurrPlot  {
         let mesh = plot.roundJoin(startLL.lat, startLL.lon, mat);
         tracksGroup.add( mesh);
 
-        console.log(" LL: " + startLL.lat + ", " + startLL.lon);
+        //console.log("***** Storm: " + curStorm.atcID + "  " + curStorm.name + " *****");
+        //console.log(" LL: " + startLL.lat + ", " + startLL.lon);
 
         for ( let i = 1; i < curStorm.entries.length; i++) {
             endLL = {lat: curStorm.entries[i][StormFile.LAT], lon: curStorm.entries[i][StormFile.LON]};
@@ -163,7 +164,7 @@ class HurrPlot  {
             var track = [];
 
             for ( let j in pts ) {
-                xyz = this.carto.latLonToXYZ(pts[j][1], pts[j][0], 2.0);
+                xyz = plot.carto.latLonToXYZ(pts[j][1], pts[j][0], 2.0);
                 track.push(xyz);
                 //console.log("xyz: " + xyz.x.toFixed(2) + " " + xyz.y.toFixed(2) + " " + xyz.z.toFixed(2));
             }
@@ -171,11 +172,12 @@ class HurrPlot  {
             var curve = new THREE.CatmullRomCurve3(track);
             var geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, 32, false);
 
-            var arcMesh = new THREE.Mesh(geometry, mat);
-            tracksGroup.add(arcMesh);
+            var trackMesh = new THREE.Mesh(geometry, mat);
+            tracksGroup.add(trackMesh);
 
             startLL = endLL;
         }
+
         plot.earth.add(tracksGroup);
     }
 
@@ -184,7 +186,7 @@ class HurrPlot  {
      */
     roundJoin (lat, lon, mat) {
 
-        var join = new THREE.SphereGeometry(HurrPlot.TRACK_DIA, 32, 32);
+        var join = new THREE.SphereGeometry(HurrPlot.TRACK_DIA*1.5, 32, 32);
 
         var xyz = this.carto.latLonToXYZ(lat, lon, 2.0);
 

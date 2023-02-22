@@ -31,9 +31,6 @@ class HurrGui  {
     setupDatGui = () => {
 
         this.setupGui();
-        this.setupYearsGui();
-        this.setupStormsGui();
-        this.setupEntriesGui();
 
         this.updateYears(this.curStorm.entries[0][StormFile.YEAR]);
         this.updateStorms(this.curStorm.entries[0][StormFile.YEAR]);
@@ -57,30 +54,6 @@ class HurrGui  {
         this.stormOptions.entryLabels = this.entryLabels[0];
 
         this.hurrGui.open();
-    }
-
-    /**
-     * Set up the years gui
-     */
-    setupYearsGui = () => {
-       // this.yearsGui = this.gui.addFolder("Years");
-       // this.yearsGui.open();
-    }
-
-    /**
-     * Set up the storms gui
-     */
-    setupStormsGui = () => {
-       // this.stormsGui = this.gui.addFolder("Storms");
-        //this.stormsGui.open();
-    }
-
-    /**
-     * Set up the entries gui
-     */
-    setupEntriesGui = () => {
-      //  this.entriesGui = this.gui.addFolder("Entries");
-      //  this.entriesGui.open();
     }
 
     /**
@@ -133,6 +106,8 @@ class HurrGui  {
         var index = gThis.stormLabels.indexOf( gThis.stormOptions.stormLabels );
         gThis.curStorm = gThis.storms[index];
         gThis.updateEntries( gThis.curStorm );
+
+        gThis.updateCallback( gThis.curStorm );
     }
 
     /**
