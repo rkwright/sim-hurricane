@@ -1,6 +1,9 @@
 /**
  * Originally from https://github.com/springmeyer/arc.js/
  * Includes a partial port of dateline handling from: gdal/ogr/ogrgeometryfactory.cpp
+ *
+ * http://en.wikipedia.org/wiki/Great-circle_distance
+ *
  * TODO - does not handle all wrapping scenarios yet
  * Forked and cleaned up by rkwright, January 2018
  */
@@ -10,19 +13,14 @@
 /**
  * Constants
  */
-var GREATCIRCLE = {
-    revision: '1.1'
-};
+class GreatCircle  {
 
-/**
- * http://en.wikipedia.org/wiki/Great-circle_distance
- *
- * @constructor
- */
-function GreatCircle() {
-}
+    //--- constants ---
+    REVISION = '1.1.0';
 
-GreatCircle.prototype = {
+    //--- class methods ---
+    constructor () {
+    }
 
     /**
      * Generate points along the great circle
@@ -33,12 +31,12 @@ GreatCircle.prototype = {
      * @param options
      * @returns {Array}
      */
-    generateArc: function( start, end, npoints, options ) {
+    generateArc ( start, end, npoints, options ) {
 
         // intialize all the class variables for this arc
         this.initArc( start, end );
 
-        var first_pass = [];
+        let first_pass = [];
         if (!npoints || npoints <= 2) {
             first_pass.push([this.start.lon, this.start.lat]);
             first_pass.push([this.end.lon, this.end.lat]);
@@ -67,13 +65,13 @@ GreatCircle.prototype = {
         }
 
         return poMulti;
-    },
+    }
 
     /**
      * @param start, in degrees
      * @param end, in degrees
      */
-    initArc: function  ( start, end ) {
+    initArc ( start, end ) {
 
         if (!start || start.lon === undefined || start.lat === undefined ||
             !end || end.lon === undefined || end.lat === undefined) {
@@ -101,12 +99,12 @@ GreatCircle.prototype = {
         } else if (isNaN(this.g)) {
             throw new Error('could not calculate great circle between ' + start + ' and ' + end);
         }
-    },
+    }
 
     /*
      * http://williams.best.vwh.net/avform.htm#Intermediate
      */
-    interpolate: function(f) {
+    interpolate (f) {
         var A = Math.sin((1 - f) * this.g) / Math.sin(this.g);
         var B = Math.sin(f * this.g) / Math.sin(this.g);
         var x = A * Math.cos(this.startLat) * Math.cos(this.startLon) + B * Math.cos(this.endLat) * Math.cos(this.endLon);
@@ -115,7 +113,7 @@ GreatCircle.prototype = {
         var lat = Math.toDeg(Math.atan2(z, Math.sqrt(Math.sqr(x) + Math.sqr(y))));
         var lon = Math.toDeg(Math.atan2(y, x));
         return [lon, lat];
-    },
+    }
 
     /**
      * See if the proposed great circle arc would cross the dateline, if so, handle it specially
@@ -123,7 +121,7 @@ GreatCircle.prototype = {
      * @param options
      * @returns {boolean}
      */
-    checkDateLine: function( first_pass, options ) {
+    checkDateLine ( first_pass, options ) {
         var bHasBigDiff = false;
         var dfMaxSmallDiffLong = 0;
         // from http://www.gdal.org/ogr2ogr.html
@@ -147,14 +145,14 @@ GreatCircle.prototype = {
             }
         }
         return bHasBigDiff && dfMaxSmallDiffLong < this.dateLineOffset;
-    },
+    }
 
     /**
      * Take care of splitting the generated arcs across the dateline
      * @param first_pass
      * @returns {Array}
      */
-    handleDateLine: function ( first_pass ) {
+    handleDateLine ( first_pass ) {
         var poMulti = [];
         var poNewLS = [];
 
@@ -211,4 +209,4 @@ GreatCircle.prototype = {
 
         return poMulti;
     }
-};
+}

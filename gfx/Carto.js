@@ -11,14 +11,15 @@
  * Constants
  */
 class Carto  {
-    static revision = '1.0';
-    static METERPERDEG = 111195.0;  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
-    static EARTH_DIAMETER = 12742.0; // per NASA
 
+    //--- constants ---
+    static REVISION = '1.0';
+    static METERPERDEG = 111195.0;  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
     static radius_major = 6378137.0;         // Equatorial Radius, WGS84
     static radius_minor = 6356752.314245179; // defined as constant
-    static f = 298.257223563;               // 1/f=(a-b)/a , a=r_major, b=r_minor
+    static f = 298.257223563;                // 1/f=(a-b)/a , a=r_major, b=r_minor
 
+    //--- class methods ---
     constructor () {
 
     }
@@ -165,8 +166,8 @@ class Carto  {
         dLon   = Math.atan2( Math.sin(heading) * Math.sin(distRad) * Math.cos(lat), Math.cos(distRad) - Math.sin(lat) * Math.sin(newLat) );
         newLon = Math.fmod( lon - dLon + Math.PI, Math.TWO_PI ) - Math.PI;
 
-        var newLatDeg = Math.toDeg(newLat);
-        var newLonDeg = Math.toDeg(newLon);
+        let newLatDeg = Math.toDeg(newLat);
+        let newLonDeg = Math.toDeg(newLon);
 
         newLonDeg = Math.wrapAng( newLonDeg, -180.0, 180.0, 360.0 );
         newLatDeg = Math.wrapAng( newLatDeg, -90.0, 90.0, 180.0 );

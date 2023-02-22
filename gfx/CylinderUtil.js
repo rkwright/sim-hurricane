@@ -7,20 +7,19 @@
  *
  */
 
-var CylinderUtil = {
-    revision: '1.0'
-};
+class CylinderUtil {
 
-CylinderUtil.CylinderUtil = function () {
-    this.direction = new THREE.Vector3();
-    this.orientation = new THREE.Matrix4();
-    this.threeUp = new THREE.Object3D().up;
-    this.matrix = new THREE.Matrix4();
-};
+    //--- constants ---
+    static  REVISION = '1.0.0';
 
-CylinderUtil.CylinderUtil.prototype = {
+    constructor  () {
+        this.direction = new THREE.Vector3();
+        this.orientation = new THREE.Matrix4();
+        this.threeUp = new THREE.Object3D().up;
+        this.matrix = new THREE.Matrix4();
+    }
 
-    createCylinder: function ( point0, point1, diameter, segments, material ) {
+    createCylinder ( point0, point1, diameter, segments, material ) {
         this.direction.subVectors(point1, point0);
         this.orientation.lookAt(point0, point1, this.threeUp);
 
@@ -39,9 +38,9 @@ CylinderUtil.CylinderUtil.prototype = {
         cylinderMesh.position.z = (point1.z + point0.z) / 2;
 
         return cylinderMesh;
-    },
+    }
 
-    alignCylinder: function ( point0, point1, cylinderMesh ) {
+    alignCylinder ( point0, point1, cylinderMesh ) {
         this.direction.subVectors(point1, point0);
         this.orientation.lookAt(point0, point1, this.threeUp);
 
@@ -61,7 +60,7 @@ CylinderUtil.CylinderUtil.prototype = {
         cylinderMesh.geometry.verticesNeedUpdate = true;
 
     }
-};
+}
 
 
 
