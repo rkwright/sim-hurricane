@@ -143,8 +143,8 @@ class HurrPlot  {
 
         plot.removeOldTrack( plot );
 
-        var saffirCat = plot.getSaffirCat(curStorm.entries[0][StormFile.MAXWIND]);
-        var mat = plot.saffirMat[saffirCat];
+        let saffirCat = plot.getSaffirCat(curStorm.entries[0][StormFile.MAXWIND]);
+        let mat = plot.saffirMat[saffirCat];
         let mesh = plot.roundJoin(startLL.lat, startLL.lon, mat);
         trackGroup.add( mesh);
 
@@ -163,8 +163,8 @@ class HurrPlot  {
 
             points = gcGen.generateArc(startLL, endLL, 10, {offset: 10});
 
-            var pts = points[0];
-            var track = [];
+            let pts = points[0];
+            let track = [];
 
             for ( let j in pts ) {
                 xyz = plot.carto.latLonToXYZ(pts[j][1], pts[j][0], 2.0);
@@ -172,10 +172,10 @@ class HurrPlot  {
                 //console.log("xyz: " + xyz.x.toFixed(2) + " " + xyz.y.toFixed(2) + " " + xyz.z.toFixed(2));
             }
 
-            var curve = new THREE.CatmullRomCurve3(track);
-            var geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, 32, false);
+            let curve = new THREE.CatmullRomCurve3(track);
+            let geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, 32, false);
 
-            var trackMesh = new THREE.Mesh(geometry, mat);
+            let trackMesh = new THREE.Mesh(geometry, mat);
             trackGroup.add(trackMesh);
 
             startLL = endLL;
@@ -185,8 +185,9 @@ class HurrPlot  {
     }
 
     /**
-     * Remove the old track, if any.  We identify it because its a group.  A more secure
-     * method would be good.
+     * Remove the old track, if any.  We identify it because it's a Group.  A more secure
+     * method would be good. Note that we have to both remove the object we added to three.js
+     * scene, but we also have to remove our own copy.
      *
      * @param plot
      */
