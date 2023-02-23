@@ -131,19 +131,22 @@ class HurrPlot  {
      * - generate a tube geometry using that curve, returns the resulting geometry
      */
     plotStormTrack ( curStorm ) {
+        var plot = window.plotObj;
         var gcGen = new GreatCircle();
         var points;
         var startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
         var endLL = {};
         var xyz;
-        var plot = window.plotObj;
-        let tracksGroup = new THREE.Group();
-        tracksGroup.trackID = curStorm.atcID;
+
+        let trackGroup = new THREE.Group();
+        trackGroup.name = curStorm.atcID;
+
+        plot.removeOldTrack( plot );
+
         var saffirCat = plot.getSaffirCat(curStorm.entries[0][StormFile.MAXWIND]);
         var mat = plot.saffirMat[saffirCat];
-
         let mesh = plot.roundJoin(startLL.lat, startLL.lon, mat);
-        tracksGroup.add( mesh);
+        trackGroup.add( mesh);
 
         //console.log("***** Storm: " + curStorm.atcID + "  " + curStorm.name + " *****");
         //console.log(" LL: " + startLL.lat + ", " + startLL.lon);
@@ -155,7 +158,7 @@ class HurrPlot  {
             mat = plot.saffirMat[saffirCat];
 
             mesh = plot.roundJoin(endLL.lat, endLL.lon, mat);
-            tracksGroup.add(mesh);
+            trackGroup.add(mesh);
             //console.log(" LL: " + endLL.lat + ", " + endLL.lon);
 
             points = gcGen.generateArc(startLL, endLL, 10, {offset: 10});
@@ -173,12 +176,32 @@ class HurrPlot  {
             var geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, 32, false);
 
             var trackMesh = new THREE.Mesh(geometry, mat);
-            tracksGroup.add(trackMesh);
+            trackGroup.add(trackMesh);
 
             startLL = endLL;
         }
 
-        plot.earth.add(tracksGroup);
+        plot.earth.add(trackGroup);
+    }
+
+    /**
+     * Remove the old track, if any.  We identify it because its a group.  A more secure
+     * method would be good.
+     *
+     * @param plot
+     */
+    removeOldTrack( plot ) {
+        for ( let k in plot.earth.children ) {
+            if (plot.earth.children[k] instanceof THREE.Group) {
+                // find the actual track mesh in the scene and remove it
+                let obj = plot.gfxScene.scene.getObjectByName( plot.earth.children[k].name);
+                if ( obj !== undefined ){
+                    plot.gfxScene.scene.remove( obj );
+                }
+                // then remove the track-mesh we stored
+                plot.earth.children.splice( k, 1 );
+            }
+        }
     }
 
     /**
