@@ -47,10 +47,13 @@
 <body>
 <!-- set up the VCR controls -->
 <div id="vcrDiv" class="vcr">
+    <label>&nbsp;Rotation
+        <input type="checkbox" id="rotationRate"  onclick="rotationRate()">
+    </label>
     <label>Track
         <input type="checkbox" id="showTrack"  onclick="showTrack()">
     </label>
-    &nbsp;&nbsp;
+    &nbsp;
     <button class="btn" onclick="stopVCR()">Stop</button>
     <button class="btn" onclick="playVCR()">Play</button>
     <button class="btn" onclick="pauseVCR()">Pause</button>
@@ -109,10 +112,15 @@
         //animateScene();
     }
 
+    function rotationRate() {
+        let rotate = document.getElementById('rotationRate');
+        console.log("RotateRate is " + ((rotate.checked === true) ? "" : " not ") + "checked");
+        hurrPlot.setRotation( rotate.checked === true );
+    }
+
     function showTrack() {
-        console.log("Show Track!");
         let checkbox = document.getElementById('showTrack');
-        console.log("Checkbox is " + ((checkbox.checked === true) ? "" : " not") + "checked");
+        console.log("Show Track is " + ((checkbox.checked === true) ? "" : " not ") + "checked");
     }
 
     function stopVCR() {

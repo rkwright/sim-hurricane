@@ -12,12 +12,12 @@
 'use strict';
 class HurrPlot  {
 
-    // Constants
+    // ----- Constants ------
     static REVISION = '1.1.0';
 
     static TRACK_DIA = 0.002;
+    static GEOM_SEGMENTS = 32;
 
-    // ----- Constants ------
     static SAFFIR =  [
         {cat: '5', minMPH: 157, color: 0xff6060},
         {cat: '4', minMPH: 130, color: 0xff8f20},
@@ -28,7 +28,9 @@ class HurrPlot  {
         {cat: 'TD', minMPH: 33, color: 0x5dbaff}
     ];
 
-    //--- class methods ---
+    static ROTATION_RATE = 0.001;
+
+    //--- Class Methods ---
     constructor () {
 
         // allocate the Scene object, request orbitControls, some of 3D axes 10 units high and the stats
@@ -44,6 +46,7 @@ class HurrPlot  {
 
         this.earth = new THREE.Group();
         this.earthGlobe = new THREE.SphereGeometry(2,32,32);
+        this.rotationRate =  0.0;
 
         this.carto = new Carto();
 
@@ -79,6 +82,14 @@ class HurrPlot  {
     }
 
     /**
+     * Allows user to control whether globe is spinning or not.
+     * @param rotOn
+     */
+    setRotation ( rotOn ) {
+        this.rotationRate = rotOn ? HurrPlot.ROTATION_RATE : 0.0;
+    }
+
+    /**
      * Animate the scene and call rendering.
      */
     animateScene = () => {
@@ -89,7 +100,7 @@ class HurrPlot  {
         // tell the hurricane model to update itself and call back to render when it can
         //hurrModel.timeStep();
 
-        window.plotObj.earth.rotation.y += 0.001;
+        window.plotObj.earth.rotation.y += this.rotationRate;
 
         // Map the 3D scene down to the 2D screen (render the frame)
         this.gfxScene.renderScene();
