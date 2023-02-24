@@ -1,15 +1,27 @@
 # sim-hurricane
-An exploration of simulating the behaviour of hurricanes. Based on the work of Greg Holland (published in Monthly Weather Review).  This code was originally written in Fortran-77 (!) by Michael Drayton and has previously  been ported (by the author) to C++ with graphics in OpenGL.  This implementation is written in modern JavaScript (ES6) and uses WebGL (three.js) for graphics.
+An exploration of simulating the behaviour of hurricanes. In particluar the focus of this model is simulating the windfields around a known hurrican track.  It makes no attempt to simulate or predict the actual track.
 
-*Note that this port is very much a work-in-progress.  It does not yet work.*
+Based on the work of Greg Holland (published in Monthly Weather Review).  This code was originally written in Fortran-77 (!) by Michael Drayton and has previously  been ported (by the author) to C++ with graphics in OpenGL.  This implementation is written in modern JavaScript (ES6) and uses WebGL (three.js) for graphics.
+
+*Note that this port is very much a work-in-progress.  It does not yet work properly.*
 
 #### Overview
 
-This is a simple time-stepping model of hurricanes based on the work of Greg Holland,. The original paper is [here](http://journals.ametsoc.org/doi/pdf/10.1175/1520-0493%281980%29108%3C1212%3AAAMOTW%3E2.0.CO%3B2). 
+This is a simple time-stepping model of hurricane wind fields based on the work of Greg Holland,. The original paper is [here](http://journals.ametsoc.org/doi/pdf/10.1175/1520-0493%281980%29108%3C1212%3AAAMOTW%3E2.0.CO%3B2). 
 
 
 
 #### The Algorithm
+
+
+
+#### Project Process
+
+- Outline
+- Databases
+- Plotting
+- Model
+- Animation
 
 
 
@@ -18,6 +30,8 @@ This is a simple time-stepping model of hurricanes based on the work of Greg Hol
 ### **Goal:** 
 
 Traverse all the storms and remove any storm with signficant amounts of missing data. Return some stats about the number of storms, missing data, etc.  Result of process is a revised version of the input JSON object which has only valid storms with valid data, though some of the data may have been interpolated.
+
+> Note: Current validation is draconian - any missing data and the storm is rejected.
 
 #### **Missing Data**
 
@@ -50,24 +64,28 @@ In each of these cases, linear interpolation is not valid so we treat these prob
 
 The algorithm for the validation consists of the following steps:
 
-- For each **storm**:
+For each **storm**:
 
-    - Fetch the first and last observations and calculate the total storm length (in hours)
+- Fetch the first and last observations and calculate the total storm length (in hours)
 
-    - For each **entry**:
+- For each **entry**:
 
-        - Check if any of the data is missing. 
+    - Check if any of the data is missing. 
 
-        - If so, for each missing observation:
+    - if the observation is the first or last, reject the storm and move on
 
-            - Calculate the time point relative to the start of the storm and store it in the entry
+    - Else  for each missing observation:
+        - Calculate the time point relative to the start of the storm and store it in the entry
 
-            - Check if the next ENTRY has a valid value for the current column
+        - Check if the next ENTRY has a valid value for the current column
 
-            - If so, fetch the previous ENTRY (which is guaranteed to be valid)
+        - If so, fetch the previous ENTRY (which is guaranteed to be valid)
 
-            - Perform linear interpolation to replace the missing value
+        - Perform linear interpolation to replace the missing value
 
-            - If the next ENTRY's observation is also missing then abort the conversion of this storm and move to the next storm
+        - Else if the next ENTRY's observation is also missing then abort the conversion of this storm and move to the next storm
 
-                
+
+Applying this approach to the HURDAT2 database (2016), the original 1,830 storms are whittled down to 528, the first being hurricane Amy in 1975.
+
+  
