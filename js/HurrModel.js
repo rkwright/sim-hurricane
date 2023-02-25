@@ -28,15 +28,14 @@ class HurrModel {
     static enModelType = ["Holland", "NWS23", "RMS97"];
     static enPositionUnits = ["Meters", "Degrees"];
 
-    static MISSING = -999;
 
     /**
      * Initialize the parameters that control hurricane sim
      * @constructor
      */
-    constructor ( objParm ) {
+    constructor ( renderFunc ) {
 
-        this.renderFunc = objParm.renderFunc;
+        this.renderFunc = renderFunc;
 
         this.metData = undefined;
 
@@ -67,7 +66,7 @@ class HurrModel {
         //this.nTimeSteps = 0;
         this.dTimeStep = 0;
 
-        this.modelType = HURRMODEL.enModelType[0];
+        this.modelType = HurrModel.enModelType[0];
 
         /*
         this.xMinPlan = 0;
@@ -158,24 +157,6 @@ class HurrModel {
     }
 
     /**
-     * Init the model from the data in the StormParm
-     */
-    initialiseFromStormData ( storm ) {
-        //var storm = this.stormArray[0];
-        this.startStorm = storm.julianDay * 24 + storm.hour;
-
-        this.cycloneAzimuth = storm.heading;
-        this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
-        this.translationalSpeed = storm.fwdVelocity * 1680.0 / 3600.0;   // knots to m/s
-        //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
-        //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
-        this.initialPosX = storm.x;
-        this.initialPosY = storm.y;
-
-        return true;
-    }
-
-    /**
      * Allocates the arrays for the hurricane simulation info
      */
     initArrays () {
@@ -223,6 +204,24 @@ class HurrModel {
                 this.sampleData[i].push( new MetParm() );
             }
         }
+
+        return true;
+    }
+
+    /**
+     * Init the model from the data in the StormParm
+     */
+    initialiseFromStormData ( storm ) {
+        //var storm = this.stormArray[0];
+        this.startStorm = storm.julianDay * 24 + storm.hour;
+
+        this.cycloneAzimuth = storm.heading;
+        this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
+        this.translationalSpeed = storm.fwdVelocity * 1680.0 / 3600.0;   // knots to m/s
+        //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
+        //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
+        this.initialPosX = storm.x;
+        this.initialPosY = storm.y;
 
         return true;
     }

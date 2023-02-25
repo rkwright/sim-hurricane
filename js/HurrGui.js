@@ -32,7 +32,7 @@ class HurrGui  {
 
         this.setupGui();
 
-        this.updateYears(this.curStorm.entries[0][StormFile.YEAR]);
+        this.updateYears();
         this.updateStorms(this.curStorm.entries[0][StormFile.YEAR]);
         this.updateEntries(this.storms[0]);
     }
@@ -61,7 +61,7 @@ class HurrGui  {
      * Have to do it this way as there appears to be no easy way to
      * "refresh" the data in a controller
      */
-    updateYears (year) {
+    updateYears () {
         if (this.yearsGui !== undefined ) {
             this.hurrGui.remove(this.yearsGui);
             console.log(this.yearsGui);

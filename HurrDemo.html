@@ -24,6 +24,8 @@
     <script src="js/HurrPlot.js"></script>
     <script src="js/StormFile.js"></script>orm
     <script src="js/HurrGui.js"></script>
+    <script src="js/MetParm.js"></script>
+    <script src="js/StormParm.js"></script>
     <script src="js/HurrModel.js"></script>
 
     <style>
@@ -64,6 +66,7 @@
     var hurrPlot;
     var hurrGui;
     var stormFile;
+    var hurrModel;
 
     // then initialize our demo's stuff
     initializeDemo();
@@ -78,6 +81,10 @@
         // Create the mesh onto which we will render the output of the hurricane model
         this.hurrPlot.createGlobe();
 
+        // now create the model.  It doesn't have any parameters or data - it's
+        // just the executable model itself
+        this.hurrModel = new HurrModel( hurrPlot.renderHurricane );
+
         loadStorms();
     }
 
@@ -88,7 +95,8 @@
 
         stormFile = new StormFile();
         stormFile.loadData( "data/hurdat2-1851-2016-041117.json", stormsLoaded );
-        console.log("Now what?");
+
+ //       this.hurrModel =  new HurrModel()
     }
 
     /**
@@ -99,18 +107,24 @@
 
         hurrGui.setupDatGui();
 
-        let strm = hurrGui.getCurrentStorm();
-        console.log("current storm: " + strm);
+        let storm = hurrGui.getCurrentStorm();
+        console.log("current storm: " + storm);
 
-        hurrPlot.plotStormTrack( strm );
+        hurrPlot.plotStormTrack( storm );
+
+        hurrModel.initArrays();
+        hurrModel.initialise( storm );
+
+        stormFile.createStormArray( hurrModel.stormArray );
+
     }
 
     /**
      *  Initialize the current model run and kick it off
      */
     function runStorm( storm ) {
-        //hurrModel.initArrays( storm );
-        //hurrModel.initialise( storm );
+        hurrModel.initArrays( storm );
+        hurrModel.initialise( storm );
 
         // Start the animation
         //animateScene();

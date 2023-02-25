@@ -12,7 +12,7 @@
 
 class StormParm {
 	// constants
-	static REVISION = "1.0";
+	static REVISION = "1.0.0";
 
 	/**
 	 * @constructor

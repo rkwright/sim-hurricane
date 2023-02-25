@@ -55,8 +55,9 @@ class HurrPlot  {
         window.plotObj = this;
     }
 
-    // class methods
-
+    /**
+     * Create the
+     */
     createGlobe() {
         this.createGlobeMat( this.finishGlobe, this );
     }

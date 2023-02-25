@@ -84,7 +84,7 @@ class StormFile {
                 stormThis.jsonData = JSON.parse(response);
 
                 if (stormThis.validateStorms()) {
-                    stormThis.stormsLoaded();
+                   stormThis.stormsLoaded();
                 }
 
             } catch (e) {
@@ -113,6 +113,7 @@ class StormFile {
                 callBack(xobj.responseText);
             }
         };
+
         xobj.send(null);
     }
 
@@ -168,6 +169,32 @@ class StormFile {
         }
 
         return false;
+    }
+
+    /**
+     * Create the array of StormParms.  This is really just a convenience for the model implementation.
+     * @returns {number}
+     */
+    createStormArray ( stormArray ) {
+        let stormParm = new StormParm();
+
+        for (let i in this.jsonData.storms) {
+            let storm = this.jsonData.storms[i];
+
+            stormParm.x = 0;
+            stormParm.y = 0;
+            stormParm.pressure = 0;
+            stormParm.fwdVelocity = 0;
+            stormParm.heading = 0;
+            stormParm.windspeed = 0;
+            stormParm.day = 0;
+            stormParm.month = 0;
+            stormParm.year = 0;
+            stormParm.julianDay = 0;
+            stormParm.hour = 0;
+        }
+
+        stormArray.push( stormParm );
     }
 
     /**
