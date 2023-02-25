@@ -24,6 +24,7 @@
     <script src="js/HurrPlot.js"></script>
     <script src="js/StormFile.js"></script>orm
     <script src="js/HurrGui.js"></script>
+    <script src="js/HurrModel.js"></script>
 
     <style>
         .btn {
@@ -60,6 +61,9 @@
 </div>
 
 <script>
+    var hurrPlot;
+    var hurrGui;
+    var stormFile;
 
     // then initialize our demo's stuff
     initializeDemo();
@@ -105,8 +109,8 @@
      *  Initialize the current model run and kick it off
      */
     function runStorm( storm ) {
-        hurrModel.initArrays( storm );
-        hurrModel.initialise( storm );
+        //hurrModel.initArrays( storm );
+        //hurrModel.initialise( storm );
 
         // Start the animation
         //animateScene();

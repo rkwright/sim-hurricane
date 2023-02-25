@@ -76,7 +76,7 @@ class HurrGui  {
     yearChange () {
         console.log("Changed year");
 
-        var gThis = window.gThis;
+        let gThis = window.gThis;
         gThis.updateStorms(gThis.stormOptions.year);
         gThis.updateEntries(gThis.storms[0]);
     }
@@ -102,8 +102,8 @@ class HurrGui  {
      * Handle the change event for the storms controller
      */
     stormsChange () {
-        var gThis = window.gThis;
-        var index = gThis.stormLabels.indexOf( gThis.stormOptions.stormLabels );
+        let gThis = window.gThis;
+        let index = gThis.stormLabels.indexOf( gThis.stormOptions.stormLabels );
         gThis.curStorm = gThis.storms[index];
         gThis.updateEntries( gThis.curStorm );
 
@@ -135,7 +135,7 @@ class HurrGui  {
      * Handle the change event for the entries controller.  Not used yet.
      */
     entriesChange () {
-        var gThis = window.gThis;
+        let gThis = window.gThis;
         gThis.entryLabels.indexOf( gThis.stormOptions.entryLabels );
     }
 
@@ -147,16 +147,16 @@ class HurrGui  {
      * @returns {Array}
      */
     getStormLabels ( storms ) {
-        var results = [];
-        var storm;
-        var mois = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        let results = [];
+        let storm;
+        let mois = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-        for (var index = 0; index < storms.length; index++) {
+        for ( let index in storms ) {
             storm = storms[index];
-            var entry = storm.entries[0];
-            var start = mois[entry[1]] + " " + entry[2];
+            let entry = storm.entries[0];
+            let start = mois[entry[1]] + " " + entry[2];
             if (storm) {
-                var label = storm.atcID + " : " + storm.name + " : " + start;
+                let label = storm.atcID + " : " + storm.name + " : " + start;
                 results.push(label);
             }
         }
@@ -170,11 +170,11 @@ class HurrGui  {
      * @returns {Array}
      */
     getEntryLabels ( storm ) {
-        var results = [];
-        var entry;
-        var label;
+        let results = [];
+        let entry;
+        let label;
 
-        for (var index = 0; index < storm.entries.length; index++) {
+        for ( let index in storm.entries ) {
             entry = storm.entries[index];
             if (entry) {
                 label = entry[2] + " " + this.pad("0000", entry[3], true).substring(0, 2) + "h " + entry[6].toFixed(1) + " " +

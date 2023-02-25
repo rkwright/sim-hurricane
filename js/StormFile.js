@@ -70,12 +70,12 @@ class StormFile {
 
     /**
      * Load the data from the specified JSON file, then parse the resulting payload
-     * @param stormFile
+     * @param stormURL
      * @param stormsLoaded
      */
-    loadData ( stormFile, stormsLoaded ) {
+    loadData ( stormURL, stormsLoaded ) {
 
-        this.stormFile  = stormFile;
+        this.stormURL  = stormURL;
         this.stormsLoaded = stormsLoaded;
 
         this.loadJSON(function (response) {
@@ -99,9 +99,9 @@ class StormFile {
      */
      loadJSON ( callBack ) {
 
-        var xobj = new XMLHttpRequest();
+        let xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
-        xobj.open('GET', this.stormFile, true);
+        xobj.open('GET', this.stormURL, true);
         xobj.onreadystatechange = function () {
             if (xobj.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
                 console.log(xobj.getAllResponseHeaders());
@@ -190,7 +190,7 @@ class StormFile {
      * @returns {Date}
      */
     getJSDate ( entry, t0, t1 ) {
-        var hours = Math.floor( entry[StormFile.TIME] / 100 );
+        let hours = Math.floor( entry[StormFile.TIME] / 100 );
         return new Date( Date.UTC( entry[StormFile.YEAR],
                                    entry[StormFile.MONTH],
                                    entry[StormFile.DAY],
@@ -202,11 +202,11 @@ class StormFile {
      * with storm data. Years are 4-digit Numbers.
      */
     getYearsWithStorms () {
-        var results = [];
-        var storm;
-        var lastYear = undefined;
+        let results = [];
+        let storm;
+        let lastYear = undefined;
 
-        for (var index in this.jsonData.storms ) {
+        for ( let index in this.jsonData.storms ) {
             storm = this.jsonData.storms[index];
             if (storm && storm.entries[0][0] !== lastYear) {
                 results.push(storm.entries[0][0]);
@@ -223,10 +223,10 @@ class StormFile {
      * @param year
      */
     getStormsForYear ( year ) {
-        var results = [];
-        var storm;
+        let results = [];
+        let storm;
 
-        for (var index = 0; index < this.jsonData.storms.length; index++) {
+        for ( let index in this.jsonData.storms ) {
             storm = this.jsonData.storms[index];
             if (storm && storm.entries[0][0] === year) {
                 results.push(storm);

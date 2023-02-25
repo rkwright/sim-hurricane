@@ -16,7 +16,9 @@ class HurrPlot  {
     static REVISION = '1.1.0';
 
     static TRACK_DIA = 0.002;
+    static GLOBE_DIAM = 2.0;
     static GEOM_SEGMENTS = 32;
+    static GLOBE_SEGMENTS = 32;
 
     static SAFFIR =  [
         {cat: '5', minMPH: 157, color: 0xff6060},
@@ -45,7 +47,7 @@ class HurrPlot  {
         this.createSaffirMat();
 
         this.earth = new THREE.Group();
-        this.earthGlobe = new THREE.SphereGeometry(2,32,32);
+        this.earthGlobe = new THREE.SphereGeometry(HurrPlot.GLOBE_DIAM,HurrPlot.GLOBE_SEGMENTS,HurrPlot.GLOBE_SEGMENTS);
         this.rotationRate =  0.0;
 
         this.carto = new Carto();
@@ -121,7 +123,8 @@ class HurrPlot  {
      * @returns {*}
      */
     getSaffirCat (windSpeed) {
-        for ( var i in HurrPlot.SAFFIR ) {
+        let i = 0;
+        for ( i in HurrPlot.SAFFIR ) {
             if (windSpeed >= HurrPlot.SAFFIR[i].minMPH)
                 break;
         }
@@ -142,12 +145,12 @@ class HurrPlot  {
      * - generate a tube geometry using that curve, returns the resulting geometry
      */
     plotStormTrack ( curStorm ) {
-        var plot = window.plotObj;
-        var gcGen = new GreatCircle();
-        var points;
-        var startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
-        var endLL = {};
-        var xyz;
+        let plot = window.plotObj;
+        let gcGen = new GreatCircle();
+        let points;
+        let startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
+        let endLL = {};
+        let xyz;
 
         let trackGroup = new THREE.Group();
         trackGroup.name = curStorm.atcID;
@@ -178,13 +181,13 @@ class HurrPlot  {
             let track = [];
 
             for ( let j in pts ) {
-                xyz = plot.carto.latLonToXYZ(pts[j][1], pts[j][0], 2.0);
+                xyz = plot.carto.latLonToXYZ(pts[j][1], pts[j][0], HurrPlot.GLOBE_DIAM);
                 track.push(xyz);
                 //console.log("xyz: " + xyz.x.toFixed(2) + " " + xyz.y.toFixed(2) + " " + xyz.z.toFixed(2));
             }
 
             let curve = new THREE.CatmullRomCurve3(track);
-            let geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, 32, false);
+            let geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, HurrPlot.GEOM_SEGMENTS, false);
 
             let trackMesh = new THREE.Mesh(geometry, mat);
             trackGroup.add(trackMesh);
@@ -211,7 +214,7 @@ class HurrPlot  {
                     plot.gfxScene.scene.remove( obj );
                 }
                 // then remove the track-mesh we stored
-                plot.earth.children.splice( k, 1 );
+                plot.earth.children.splice( Number(k), 1 );
             }
         }
     }
@@ -221,13 +224,13 @@ class HurrPlot  {
      */
     roundJoin (lat, lon, mat) {
 
-        var join = new THREE.SphereGeometry(HurrPlot.TRACK_DIA*1.5, 32, 32);
+        let join = new THREE.SphereGeometry(HurrPlot.TRACK_DIA*1.5, 32, 32);
 
-        var xyz = this.carto.latLonToXYZ(lat, lon, 2.0);
+        let xyz = this.carto.latLonToXYZ(lat, lon, 2.0);
 
-        var mesh = new THREE.Mesh(join, mat);
+        let mesh = new THREE.Mesh(join, mat);
         mesh.position.set(xyz.x, xyz.y, xyz.z);
-        //this.gfxScene.add(mesh);
+
         return mesh;
     }
 
