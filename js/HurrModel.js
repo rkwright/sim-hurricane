@@ -25,6 +25,8 @@ class HurrModel {
     static MIN_PRESSURE_DIFFERENCE =     0.1;
     static AIR_DENSITY =                 1.225;
 
+    static TIME_STEP = 0.01;
+
     static enModelType = ["Holland", "NWS23", "RMS97"];
     static enPositionUnits = ["Meters", "Degrees"];
 
@@ -65,7 +67,7 @@ class HurrModel {
 
         //this.nTimeSteps = 0;
         this.dTimeStep = 0;
-
+        this.dt = HurrModel.TIME_STEP;
         this.modelType = HurrModel.enModelType[0];
 
         /*
@@ -83,44 +85,44 @@ class HurrModel {
 
         // allocate the equatorial array of pointers
         this.metData = []; //(CMetParm **) new (CMetParm *[ Math.round(360.0 / this.dataNodeStep) ]);
-        for ( var  n=0; n<Math.round(360.0 / this.dataNodeStep); n++ )
+        for ( let  n=0; n<Math.round(360.0 / this.dataNodeStep); n++ )
             this.metData.push( [] );
 
         // set up the two arrays that hold the pre-calculated angles and distances to the sample
         // points for each time-step
         this.sampleAngle = []; //(double *) new double[ this.nAngularSamples ];
-        var angleIncrement = 360.0 / this.nAngularSamples;
-        for ( var i = 0; i < this.nAngularSamples; i++ ) {
+        let angleIncrement = 360.0 / this.nAngularSamples;
+        for ( let i = 0; i < this.nAngularSamples; i++ ) {
             this.sampleAngle.push(i * angleIncrement);
         }
 
         this.sampleDist = [];  //(double *) new double[ this.nRadialSamples ];
-        var logIncrement = Math.log(this.radiusStormInfluence) / (this.nRadialSamples - 1.0);
-        for ( var j = 0; j < this.nRadialSamples; j++ ) {
+        let logIncrement = Math.log(this.radiusStormInfluence) / (this.nRadialSamples - 1.0);
+        for ( let j = 0; j < this.nRadialSamples; j++ ) {
             this.sampleDist.push((Math.exp(j * logIncrement) - 1.0) * 1000.0);  // in m
         }
 
         // finally allocate the array of sample positions. This is a fixed array of radial positions, each
         // element of the array is the X/Y position of the sample point relative to the eye
         this.samplePos = [];  //(double ***) new (double **[ this.nAngularSamples ]);
-        for ( i = 0; i < this.nAngularSamples; i++ ) {
-            var angle = Math.toRad(this.sampleAngle[i]);
-            var cosAng = Math.cos(angle);
-            var sinAng = Math.sin(angle);
+        for ( let i = 0; i < this.nAngularSamples; i++ ) {
+            let angle = Math.toRad(this.sampleAngle[i]);
+            let cosAng = Math.cos(angle);
+            let sinAng = Math.sin(angle);
 
             this.samplePos[i] = [];  //(double **) new (double *[ this.nRadialSamples ]);
-            for ( j = 0; j < this.nRadialSamples; j++ ) {
+            for ( let j = 0; j < this.nRadialSamples; j++ ) {
                 this.samplePos[i].push( new THREE.Vector2(this.sampleDist[j] * cosAng, this.sampleDist[j] * sinAng) );
             }
         }
 
         // allocate the array of CMEtParms to hold the time-step worth of data
         this.sampleData = [];   //(CMetParm **) new (CMetParm *[ this.nAngularSamples ]);
-        for (i = 0; i < this.nAngularSamples; i++) {
+        for ( let i = 0; i < this.nAngularSamples; i++ ) {
 
-            // allocate the ray of CMetParm for the time-step data
-            this.sampleData[i] = [];   //(CMetParm *) new CMetParm[this.nRadialSamples];
-            for (j = 0; j < this.nRadialSamples; j++) {
+            // allocate the ray of MetParm for the time-step data
+            this.sampleData[i] = [];   // (CMetParm *) new CMetParm[this.nRadialSamples];
+            for ( let j = 0; j < this.nRadialSamples; j++ ) {
                 this.sampleData[i].push( new MetParm() );
             }
         }
@@ -232,15 +234,15 @@ class HurrModel {
      */
     timeStep () {
 
-        var newTime = performance.now();
-        var deltaTime = Math.min(newTime - this.currentTime, this.MAX_RENDER_TIME);
+        let newTime = performance.now();
+        let deltaTime = Math.min(newTime - this.currentTime, this.MAX_RENDER_TIME);
         this.currentTime = newTime;
 
         this.accumulator += deltaTime;
 
         //console.log("Accum:" + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) );
 
-        var n = 0;
+        let n = 0;
         while (this.accumulator >= this.dt) {
             this.accumulator -= this.dt;
 
@@ -251,11 +253,11 @@ class HurrModel {
             n++;
         }
 
-        var alpha = this.accumulator / this.dt;
+        let alpha = this.accumulator / this.dt;
 
         //console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
-        this.renderFunc( this.sampleData );
+        this.renderFunc( this.xEye, this.yEye, this.sampleData );
 
         return 0;
     }
@@ -267,7 +269,7 @@ class HurrModel {
     update ( dt ) {
 
         // update the available params if the function returns false, the storm is complete
-        if (this.updatestormObs() === false)
+        if (this.updateStormObs() === false)
             return true;
 
         // loop through all the time steps calculating and plotting the wind arrows
@@ -290,12 +292,12 @@ class HurrModel {
         //this.centreFilled = Math.abs(this.peripheralPressurePascals - this.centralPressurePascals) < HurrModel.MIN_PRESSURE_DIFFERENCE;
 
         // now calculate the windfield for the current time
-        for (var i = 0; i < this.nAngularSamples; i++) {
-            var angle = this.sampleAngle[i];
+        for (let i = 0; i < this.nAngularSamples; i++) {
+            let angle = this.sampleAngle[i];
 
-            for ( var j = 0; j < this.nRadialSamples; j++ ) {
+            for ( let j = 0; j < this.nRadialSamples; j++ ) {
 
-                var velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
+                let velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
 
                 this.sampleData[i][j].xVel = velocity.x;
                 this.sampleData[i][j].yVel = velocity.y;
@@ -313,7 +315,7 @@ class HurrModel {
     /**
      * Get the current, possibly interpolated, data for this time step
      */
-    updatestormObs () {
+    updateStormObs () {
         let stormObs;
         let prevStormObs;
         let stormTime;
@@ -323,7 +325,7 @@ class HurrModel {
             this.startStorm = stormObs.julianDay * 24 + stormObs.hour;
         }
 
-        var curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
+        let curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
         for ( let i in this.stormObsArray ) {
             stormObs = this.stormObsArray[i];
@@ -340,29 +342,21 @@ class HurrModel {
             return false;
 
         prevStormObs = this.stormObsArray[i - 1];
-        var prevTime = prevStormObs.julianDay * 24 + prevStormObs.hour;
-        var prop = (stormTime - curTime) / (stormTime - prevTime);
-        var heading;
-        var lon;
-        var lat;
-        var fwdVelocity;
+        let prevTime = prevStormObs.julianDay * 24 + prevStormObs.hour;
+        let prop = (stormTime - curTime) / (stormTime - prevTime);
 
-        if (this.interpolate(stormParm.heading, prevStormParm.heading, prop, heading, HurrModel.MISSING, true) &&
-            this.interpolate(stormParm.fwdVelocity, prevStormParm.fwdVelocity, prop, fwdVelocity, HurrModel.MISSING, true) &&
-            this.interpolate(stormParm.x, prevStormParm.x, prop, lon, StormFile.MISSING, true) &&
-            this.interpolate(stormParm.y, prevStormParm.y, prop, lat, StromFile.MISSING, true)) {
-            this.cycloneAzimuth = heading;
-            this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
-            this.translationalSpeed = fwdVelocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
+        this.cycloneAzimuth = Math.lerp( stormObs.heading, prevStormObs.heading, prop );
+        this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
+
+        let fwdVelocity = Math.lerp( stormObs.fwdVelocity, prevStormObs.fwdVelocity, prop );
+        this.translationalSpeed = fwdVelocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
+
+        this.xEye = Math.lerp( stormObs.x, prevStormObs.x, prop );
+        this.yEye = Math.lerp( stormObs.y, prevStormObs.y, prop );
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
-            this.xEye = lon;
-            this.yEye = lat;
 
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -375,7 +369,7 @@ class HurrModel {
         if (a === StormFile.MISSING || b === StormFile.MISSING)
             return false;
 
-        var slope = b - a;
+        let slope = b - a;
         if (bTween) {
             newValue = a + slope * prop;
         }
