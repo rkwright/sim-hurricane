@@ -77,6 +77,58 @@ class HurrModel {
     };
 
     /**
+     * Allocates the arrays for the hurricane simulation info
+     */
+    initArrays () {
+
+        // allocate the equatorial array of pointers
+        this.metData = []; //(CMetParm **) new (CMetParm *[ Math.round(360.0 / this.dataNodeStep) ]);
+        for ( var  n=0; n<Math.round(360.0 / this.dataNodeStep); n++ )
+            this.metData.push( [] );
+
+        // set up the two arrays that hold the pre-calculated angles and distances to the sample
+        // points for each time-step
+        this.sampleAngle = []; //(double *) new double[ this.nAngularSamples ];
+        var angleIncrement = 360.0 / this.nAngularSamples;
+        for ( var i = 0; i < this.nAngularSamples; i++ ) {
+            this.sampleAngle.push(i * angleIncrement);
+        }
+
+        this.sampleDist = [];  //(double *) new double[ this.nRadialSamples ];
+        var logIncrement = Math.log(this.radiusStormInfluence) / (this.nRadialSamples - 1.0);
+        for ( var j = 0; j < this.nRadialSamples; j++ ) {
+            this.sampleDist.push((Math.exp(j * logIncrement) - 1.0) * 1000.0);  // in m
+        }
+
+        // finally allocate the array of sample positions. This is a fixed array of radial positions, each
+        // element of the array is the X/Y position of the sample point relative to the eye
+        this.samplePos = [];  //(double ***) new (double **[ this.nAngularSamples ]);
+        for ( i = 0; i < this.nAngularSamples; i++ ) {
+            var angle = Math.toRad(this.sampleAngle[i]);
+            var cosAng = Math.cos(angle);
+            var sinAng = Math.sin(angle);
+
+            this.samplePos[i] = [];  //(double **) new (double *[ this.nRadialSamples ]);
+            for ( j = 0; j < this.nRadialSamples; j++ ) {
+                this.samplePos[i].push( new THREE.Vector2(this.sampleDist[j] * cosAng, this.sampleDist[j] * sinAng) );
+            }
+        }
+
+        // allocate the array of CMEtParms to hold the time-step worth of data
+        this.sampleData = [];   //(CMetParm **) new (CMetParm *[ this.nAngularSamples ]);
+        for (i = 0; i < this.nAngularSamples; i++) {
+
+            // allocate the ray of CMetParm for the time-step data
+            this.sampleData[i] = [];   //(CMetParm *) new CMetParm[this.nRadialSamples];
+            for (j = 0; j < this.nRadialSamples; j++) {
+                this.sampleData[i].push( new MetParm() );
+            }
+        }
+
+        return true;
+    }
+
+    /**
      *
      */
     initialise ( curStorm ) {
@@ -154,58 +206,6 @@ class HurrModel {
         // clean up the storage arrays, as necessary
         this.stormTrack = [];
         this.stormArray = [];
-    }
-
-    /**
-     * Allocates the arrays for the hurricane simulation info
-     */
-    initArrays () {
-
-        // allocate the equatorial array of pointers
-        this.metData = []; //(CMetParm **) new (CMetParm *[ Math.round(360.0 / this.dataNodeStep) ]);
-        for ( var  n=0; n<Math.round(360.0 / this.dataNodeStep); n++ )
-            this.metData.push( [] );
-
-        // set up the two arrays that hold the pre-calculated angles and distances to the sample
-        // points for each time-step
-        this.sampleAngle = []; //(double *) new double[ this.nAngularSamples ];
-        var angleIncrement = 360.0 / this.nAngularSamples;
-        for ( var i = 0; i < this.nAngularSamples; i++ ) {
-            this.sampleAngle.push(i * angleIncrement);
-        }
-
-        this.sampleDist = [];  //(double *) new double[ this.nRadialSamples ];
-        var logIncrement = Math.log(this.radiusStormInfluence) / (this.nRadialSamples - 1.0);
-        for ( var j = 0; j < this.nRadialSamples; j++ ) {
-            this.sampleDist.push((Math.exp(j * logIncrement) - 1.0) * 1000.0);  // in m
-        }
-
-        // finally allocate the array of sample positions. This is a fixed array of radial positions, each
-        // element of the array is the X/Y position of the sample point relative to the eye
-        this.samplePos = [];  //(double ***) new (double **[ this.nAngularSamples ]);
-        for ( i = 0; i < this.nAngularSamples; i++ ) {
-            var angle = Math.toRad(this.sampleAngle[i]);
-            var cosAng = Math.cos(angle);
-            var sinAng = Math.sin(angle);
-
-            this.samplePos[i] = [];  //(double **) new (double *[ this.nRadialSamples ]);
-            for ( j = 0; j < this.nRadialSamples; j++ ) {
-                this.samplePos[i].push( new THREE.Vector2(this.sampleDist[j] * cosAng, this.sampleDist[j] * sinAng) );
-            }
-        }
-
-        // allocate the array of CMEtParms to hold the time-step worth of data
-        this.sampleData = [];   //(CMetParm **) new (CMetParm *[ this.nAngularSamples ]);
-        for (i = 0; i < this.nAngularSamples; i++) {
-
-            // allocate the ray of CMetParm for the time-step data
-            this.sampleData[i] = [];   //(CMetParm *) new CMetParm[this.nRadialSamples];
-            for (j = 0; j < this.nRadialSamples; j++) {
-                this.sampleData[i].push( new MetParm() );
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -320,21 +320,21 @@ class HurrModel {
      * Get the current, possibly interpolated, data for this time step
      */
     updateStormData () {
-        var storm;
-        var prevStorm;
-        var stormTime;
+        let stormParm;
+        let prevStormParm;
+        let stormTime;
 
         if (this.nCurStep === 0) {
-            storm = this.stormArray[0];
-            this.startStorm = storm.julianDay * 24 + storm.hour;
+            stormParm = this.stormArray[0];
+            this.startStorm = stormParm.julianDay * 24 + stormParm.hour;
         }
 
         var curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
         for (var i = 0; i < this.stormArray.length; i++) {
-            storm = this.stormArray[i];
+            stormParm = this.stormArray[i];
 
-            stormTime = storm.julianDay * 24 + storm.hour;
+            stormTime = stormParm.julianDay * 24 + stormParm.hour;
 
             // if we have found the right spot, interpolate the values we need
             if (stormTime >= curTime)
@@ -345,21 +345,21 @@ class HurrModel {
         if (i >= this.stormArray.length)
             return false;
 
-        prevStorm = this.stormArray[i - 1];
-        var prevTime = prevStorm.julianDay * 24 + prevStorm.hour;
+        prevStormParm = this.stormArray[i - 1];
+        var prevTime = prevStormParm.julianDay * 24 + prevStormParm.hour;
         var prop = (stormTime - curTime) / (stormTime - prevTime);
         var heading;
         var lon;
         var lat;
         var fwdVelocity;
 
-        if (this.interpolate(storm.heading, prevStorm.heading, prop, heading, HurrModel.MISSING, true) &&
-            this.interpolate(storm.fwdVelocity, prevStorm.fwdVelocity, prop, fwdVelocity, HurrModel.MISSING, true) &&
-            this.interpolate(storm.x, prevStorm.x, prop, lon, HurrModel.MISSING, true) &&
-            this.interpolate(storm.y, prevStorm.y, prop, lat, HurrModel.MISSING, true)) {
+        if (this.interpolate(stormParm.heading, prevStormParm.heading, prop, heading, HurrModel.MISSING, true) &&
+            this.interpolate(stormParm.fwdVelocity, prevStormParm.fwdVelocity, prop, fwdVelocity, HurrModel.MISSING, true) &&
+            this.interpolate(stormParm.x, prevStormParm.x, prop, lon, StormFile.MISSING, true) &&
+            this.interpolate(stormParm.y, prevStormParm.y, prop, lat, StromFile.MISSING, true)) {
             this.cycloneAzimuth = heading;
             this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
-            this.translationalSpeed = fwdVelocity * HurrModel.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
+            this.translationalSpeed = fwdVelocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
             this.xEye = lon;
@@ -378,7 +378,7 @@ class HurrModel {
      */
 
     interpolate (a, b, prop, newValue, missing, bTween) {
-        if (a === HurrModel.MISSING || b === HurrModel.MISSING)
+        if (a === StormFile.MISSING || b === StormFile.MISSING)
             return false;
 
         var slope = b - a;
@@ -398,22 +398,22 @@ class HurrModel {
      */
     calcWindSpeeds (rDist, Ang) {
 
-        var AziSite = 0;
-        var beta = 0;
-        var Vel = 0;
-        var Rkm = 0;
-        var Rf2 = 0;
-        var Rb = 0;
-        var earb = 0;
-        //var R2;
-        var PressDiff = 0;
-        var Rr = 0;
-        var eRr = 0;
-        var VelC2 = 0;
-        var velocity = new THREE.Vector2(0, 0);
+        let AziSite = 0;
+        let beta = 0;
+        let Vel = 0;
+        let Rkm = 0;
+        let Rf2 = 0;
+        let Rb = 0;
+        let earb = 0;
+        //let R2;
+        let PressDiff = 0;
+        let Rr = 0;
+        let eRr = 0;
+        let VelC2 = 0;
+        let velocity = new THREE.Vector2(0, 0);
 
         // calculate the distance from the current point to the cyclone centre
-        var polarC = this.carto.cartesianToPolarNorth( this.xNow, this.yNow, this.xEye, this.yEye );
+        let polarC = this.carto.cartesianToPolarNorth( this.xNow, this.yNow, this.xEye, this.yEye );
 
         //R2 = rDist * rDist;			// m^2
         //Ang = Math.toRad(Ang);
@@ -493,16 +493,16 @@ class HurrModel {
     accumulateData () {
 
         // first, find the closest meridian to the hurricane's center
-        var nMeridian = Math.round((180.0 + this.xEye) / this.dataNodeStep);
-        var nCenterY = Math.round((90.0 + this.yEye) / this.dataNodeStep);
-        var stepKM = this.carto.degToMeters(this.dataNodeStep) / 1000.0;
-        var maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
+        let nMeridian = Math.round((180.0 + this.xEye) / this.dataNodeStep);
+        let nCenterY = Math.round((90.0 + this.yEye) / this.dataNodeStep);
+        let stepKM = this.carto.degToMeters(this.dataNodeStep) / 1000.0;
+        let maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
 
         // clear all the old windfields
-        var met;
-        for ( var k = 0; k < Math.round(360.0 / this.dataNodeStep); k++ ) {
+        let met;
+        for ( let k = 0; k < Math.round(360.0 / this.dataNodeStep); k++ ) {
             if ( this.metData[k] !== undefined ) {
-                for ( var n=0; n< Math.round(180.0 / this.dataNodeStep); n++ ) {
+                for ( let n=0; n< Math.round(180.0 / this.dataNodeStep); n++ ) {
                     met = this.metData[k][n];
                     met.xVel = 0.0;
                     met.yVel = 0.0;
@@ -514,19 +514,19 @@ class HurrModel {
         // now oscillate back and forth in longitude and accumulate the detailed
         // time step data into the nodal grid
 
-        //var bDone = false;
-        //var nDir = 1;
-        var index = 0;
+        //let bDone = false;
+        //let nDir = 1;
+        let index = 0;
 
-        var centerMerc = this.carto.latlonToMerc(this.xEye, this.yEye);
-        var xCenter = centerMerc.x;
-        var yCenter = centerMerc.y;
-        var xNode, yNode;
+        let centerMerc = this.carto.latlonToMerc(this.xEye, this.yEye);
+        let xCenter = centerMerc.x;
+        let yCenter = centerMerc.y;
+        let xNode, yNode;
 
         // find the lat/lon of the closest node.
-        var closeLon = Math.round(this.xEye / this.dataNodeStep) * this.dataNodeStep;
-        var closeLat = Math.round(this.yEye / this.dataNodeStep) * this.dataNodeStep;
-        var maxDist = Math.hypot(stepKM, stepKM) / 2.0 * 1000.0;  // in m
+        let closeLon = Math.round(this.xEye / this.dataNodeStep) * this.dataNodeStep;
+        let closeLat = Math.round(this.yEye / this.dataNodeStep) * this.dataNodeStep;
+        let maxDist = Math.hypot(stepKM, stepKM) / 2.0 * 1000.0;  // in m
 
         do {
 
@@ -536,32 +536,32 @@ class HurrModel {
 
             // now find the upper and lower bounds that need to be updated
 
-            var angle = Math.atan((index * stepKM) / this.radiusStormInfluence);
-            var nRangeY = Math.round(Math.abs(Math.cos(angle)) * this.radiusStormInfluence / stepKM);
-            var rPos = [];
-            var aPos = [];
+            let angle = Math.atan((index * stepKM) / this.radiusStormInfluence);
+            let nRangeY = Math.round(Math.abs(Math.cos(angle)) * this.radiusStormInfluence / stepKM);
+            let rPos = [];
+            let aPos = [];
 
-            var lon = closeLon + index * this.dataNodeStep;
-            var lat = closeLat - nRangeY * this.dataNodeStep;
-            var nodeMerc;
-            var weight;
+            let lon = closeLon + index * this.dataNodeStep;
+            let lat = closeLat - nRangeY * this.dataNodeStep;
+            let nodeMerc;
+            let weight;
 
-            for ( n = -nRangeY; n < nRangeY; n++) {
+            for ( let n = -nRangeY; n < nRangeY; n++) {
                 met = this.metData[nMeridian + index][nCenterY + n];
                 nodeMerc = this.carto.latlonToMerc(lon, lat);
                 xNode = nodeMerc.x;
                 yNode = nodeMerc.y;
 
                 // now find the four closest sampled points
-                var nClose = this.findClosest(xNode - xCenter, yNode - yCenter, rPos, aPos);
+                let nClose = this.findClosest(xNode - xCenter, yNode - yCenter, rPos, aPos);
 
                 if (nClose > 0) {
-                    var xVel = 0.0;
-                    var yVel = 0.0;
-                    var sumWeight = 0.0;
-                    var xSamp = 0.0;
-                    var ySamp = 0.0;
-                    for (var j = 0; j < nClose; j++) {
+                    let xVel = 0.0;
+                    let yVel = 0.0;
+                    let sumWeight = 0.0;
+                    let xSamp = 0.0;
+                    let ySamp = 0.0;
+                    for (let j = 0; j < nClose; j++) {
                         xSamp = xCenter + this.samplePos[aPos[j]][rPos[j]][0];
                         ySamp = yCenter + this.samplePos[aPos[j]][rPos[j]][1];
 
@@ -608,13 +608,13 @@ class HurrModel {
      */
     findClosest  (x, y, rPos, aPos) {
 
-        var n = 0;
-        var angle = Math.toDeg(Math.atan2(y, x));
+        let n = 0;
+        let angle = Math.toDeg(Math.atan2(y, x));
 
         if (angle < 0.0)
             angle += 360.0;
 
-        var angleIndex = Math.round(angle / 360.0 * this.nAngularSamples);
+        let angleIndex = Math.round(angle / 360.0 * this.nAngularSamples);
         if (angleIndex >= (this.nAngularSamples - 1))
             angleIndex = 0;
 

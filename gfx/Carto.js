@@ -13,11 +13,37 @@
 class Carto  {
 
     //--- constants ---
-    static REVISION = '1.0';
+    static REVISION = '1.1.0';
+
     static METERPERDEG = 111195.0;  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
     static radius_major = 6378137.0;         // Equatorial Radius, WGS84
     static radius_minor = 6356752.314245179; // defined as constant
     static f = 298.257223563;                // 1/f=(a-b)/a , a=r_major, b=r_minor
+
+    // various conversion to meters, from Systeme Internationale Handbook, 1975
+    static KM_TO_METER =				1000.0;
+    static M_TO_METER =					1.0;
+    static CM_TO_METER =				0.01;
+    static MM_TO_METER =				0.001;
+
+    static MILE_TO_METER =				1609.344;
+    static YARD_TO_METER =				0.9144;
+    static FOOT_TO_METER =				0.3048;
+    static INCH_TO_METER =				0.0254;
+
+    static NAUTICALMILE_TO_METER =		1852.0;
+    static UKNAUTICALMILE_TO_METER =	1853.184;
+
+    static SURVEYFOOT_TO_METER =		0.3048;
+    static LINK_TO_METER =				0.201168;
+    static CHAIN_TO_METER =				20.1168;
+    static ROD_TO_METER =				5.0292;
+    static PERCH_TO_METER =				5.0292;
+    static POLE_TO_METER =				5.0292;
+
+    static ARPENT_TO_METER =			58.47131;
+    static FRENCHPERCH_TO_METER =		0.5847131;
+    static FRENCHFOOT_TO_METER =		0.324841;
 
     //--- class methods ---
     constructor () {

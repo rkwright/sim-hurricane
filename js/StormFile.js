@@ -180,21 +180,24 @@ class StormFile {
 
         for (let i in this.jsonData.storms) {
             let storm = this.jsonData.storms[i];
+            let entry = storm.entries[0];
 
-            stormParm.x = 0;
-            stormParm.y = 0;
-            stormParm.pressure = 0;
-            stormParm.fwdVelocity = 0;
-            stormParm.heading = 0;
-            stormParm.windspeed = 0;
-            stormParm.day = 0;
-            stormParm.month = 0;
-            stormParm.year = 0;
-            stormParm.julianDay = 0;
-            stormParm.hour = 0;
+            console.log();
+
+            stormParm.x = entry[StormFile.LON];
+            stormParm.y = entry[StormFile.LAT];
+            stormParm.pressure = entry[StormFile.MINPRESS];
+            stormParm.fwdVelocity = -1;  // compute!
+            stormParm.heading = -1;      // compute!
+            stormParm.windspeed = entry[StormFile.MAXWIND];
+            stormParm.day = entry[StormFile.DAY];
+            stormParm.month = entry[StormFile.MONTH];
+            stormParm.year = entry[StormFile.YEAR];
+            stormParm.julianDay = this.julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);;
+            stormParm.hour = entry[StormFile.TIME];    // 0,600,1200,1800
+
+            stormArray.push( stormParm );
         }
-
-        stormArray.push( stormParm );
     }
 
     /**
