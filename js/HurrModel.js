@@ -133,7 +133,7 @@ class HurrModel {
      */
     initialise ( curStorm ) {
 
-        this.initialiseFromStormData( curStorm );
+        this.initialiseFromStormObs( curStorm );
 
         this.nCurStep = 0;
         this.curTime = 0.0;
@@ -204,24 +204,23 @@ class HurrModel {
         this.airDensity = HurrModel.AIR_DENSITY;
 
         // clean up the storage arrays, as necessary
-        this.stormTrack = [];
-        this.stormArray = [];
+        //this.stormTrack = [];
+        this.stormObsArray = [];  // the array of StormParms for this storm
     }
 
     /**
-     * Init the model from the data in the StormParm
+     * Init the model from the data in the StormObs
      */
-    initialiseFromStormData ( storm ) {
-        //var storm = this.stormArray[0];
-        this.startStorm = storm.julianDay * 24 + storm.hour;
+    initialiseFromStormObs ( stormObs ) {
+        this.startStorm = stormObs.julianDay * 24 + stormObs.hour;
 
-        this.cycloneAzimuth = storm.heading;
+        this.cycloneAzimuth = stormObs.heading;
         this.cycloneAzimuthRadians = Math.toRad(this.cycloneAzimuth);
-        this.translationalSpeed = storm.fwdVelocity * 1680.0 / 3600.0;   // knots to m/s
+        this.translationalSpeed = stormObs.fwdVelocity * 1680.0 / 3600.0;   // knots to m/s
         //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
         //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
-        this.initialPosX = storm.x;
-        this.initialPosY = storm.y;
+        this.initialPosX = stormObs.x;
+        this.initialPosY = stormObs.y;
 
         return true;
     }
@@ -268,7 +267,7 @@ class HurrModel {
     update ( dt ) {
 
         // update the available params if the function returns false, the storm is complete
-        if (this.updateStormData() === false)
+        if (this.updatestormObs() === false)
             return true;
 
         // loop through all the time steps calculating and plotting the wind arrows
@@ -277,7 +276,6 @@ class HurrModel {
 
         //this.centreOnScreen = (this.xEye >= this.xMinPlan && this.xEye <= this.xMaxPlan &&
         //                        this.yEye >= this.yMinPlan && this.yEye <= this.yMaxPlan);
-
         // if the storm has moved on to land, recalculate the Holland model parameters
         if (this.onLand) {
             this.centralPressurePascals = Math.min(this.centralPressurePascals + this.fillingRatePascals * this.dTimeStep, this.peripheralPressurePascals);
@@ -295,7 +293,6 @@ class HurrModel {
         for (var i = 0; i < this.nAngularSamples; i++) {
             var angle = this.sampleAngle[i];
 
-            // TRACE("%3d", i);
             for ( var j = 0; j < this.nRadialSamples; j++ ) {
 
                 var velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
@@ -305,10 +302,7 @@ class HurrModel {
 
                 this.sampleData[i][j].velocity = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
 
-                // TRACE("(%3.0f, %3.0f) ", xVel,yVel);
             }
-
-            // TRACE("\n");
         }
 
         this.accumulateData();
@@ -319,22 +313,22 @@ class HurrModel {
     /**
      * Get the current, possibly interpolated, data for this time step
      */
-    updateStormData () {
-        let stormParm;
-        let prevStormParm;
+    updatestormObs () {
+        let stormObs;
+        let prevStormObs;
         let stormTime;
 
         if (this.nCurStep === 0) {
-            stormParm = this.stormArray[0];
-            this.startStorm = stormParm.julianDay * 24 + stormParm.hour;
+            stormObs = this.stormObsArray[0];
+            this.startStorm = stormObs.julianDay * 24 + stormObs.hour;
         }
 
         var curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
-        for (var i = 0; i < this.stormArray.length; i++) {
-            stormParm = this.stormArray[i];
+        for ( let i in this.stormObsArray ) {
+            stormObs = this.stormObsArray[i];
 
-            stormTime = stormParm.julianDay * 24 + stormParm.hour;
+            stormTime = stormObs.julianDay * 24 + stormObs.hour;
 
             // if we have found the right spot, interpolate the values we need
             if (stormTime >= curTime)
@@ -342,11 +336,11 @@ class HurrModel {
         }
 
         // end of time?
-        if (i >= this.stormArray.length)
+        if (i >= this.stormObsArray.length)
             return false;
 
-        prevStormParm = this.stormArray[i - 1];
-        var prevTime = prevStormParm.julianDay * 24 + prevStormParm.hour;
+        prevStormObs = this.stormObsArray[i - 1];
+        var prevTime = prevStormObs.julianDay * 24 + prevStormObs.hour;
         var prop = (stormTime - curTime) / (stormTime - prevTime);
         var heading;
         var lon;

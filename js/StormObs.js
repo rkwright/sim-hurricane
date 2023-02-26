@@ -1,7 +1,7 @@
 /*
- * Storm parameters for the hurricane modelling
+ * Storm data for a single obsevation for the hurricane modelling
  *
- * These are the time-node state parameters that are read from the storm file.
+ * These are the time-node state parameters that are derived from the raw storm file.
  * They are effectively the inputs for each time step.
  *
  * @author rkwright / www.geofx.com
@@ -10,9 +10,9 @@
  *
  */
 
-class StormParm {
+class StormObs {
 	// constants
-	static REVISION = "1.0.0";
+	static REVISION = "1.1.0";
 
 	/**
 	 * @constructor

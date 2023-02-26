@@ -172,32 +172,34 @@ class StormFile {
     }
 
     /**
-     * Create the array of StormParms.  This is really just a convenience for the model implementation.
+     * Create the array of StormObs.  This is a half-way attempt to provide a facade around the model so
+     * differnt hurricane databases cane be used later.
+     * @param  curStorm
      * @returns {number}
      */
-    createStormArray ( stormArray ) {
-        let stormParm = new StormParm();
+    createStormObs ( curStorm ) {
+        let stormObsArray = [];  // clear the array
 
-        for (let i in this.jsonData.storms) {
-            let storm = this.jsonData.storms[i];
-            let entry = storm.entries[0];
+        for ( let i in curStorm.entries ) {
+            let entry = curStorm.entries[i];
+            let stormObs = new StormObs();
 
-            console.log();
+            stormObs.x = entry[StormFile.LON];
+            stormObs.y = entry[StormFile.LAT];
+            stormObs.pressure = entry[StormFile.MINPRESS];
+            stormObs.fwdVelocity = -1;  // compute!
+            stormObs.heading = -1;      // compute!
+            stormObs.windspeed = entry[StormFile.MAXWIND];
+            stormObs.day = entry[StormFile.DAY];
+            stormObs.month = entry[StormFile.MONTH];
+            stormObs.year = entry[StormFile.YEAR];
+            stormObs.julianDay = this.julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);;
+            stormObs.hour = entry[StormFile.TIME];    // 0,600,1200,1800
 
-            stormParm.x = entry[StormFile.LON];
-            stormParm.y = entry[StormFile.LAT];
-            stormParm.pressure = entry[StormFile.MINPRESS];
-            stormParm.fwdVelocity = -1;  // compute!
-            stormParm.heading = -1;      // compute!
-            stormParm.windspeed = entry[StormFile.MAXWIND];
-            stormParm.day = entry[StormFile.DAY];
-            stormParm.month = entry[StormFile.MONTH];
-            stormParm.year = entry[StormFile.YEAR];
-            stormParm.julianDay = this.julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);;
-            stormParm.hour = entry[StormFile.TIME];    // 0,600,1200,1800
-
-            stormArray.push( stormParm );
+            stormObsArray.push( stormObs );
         }
+
+        return stormObsArray;
     }
 
     /**
@@ -249,7 +251,7 @@ class StormFile {
 
     /**
      * Searches the currrent JSON data file and returns an array of the storms that occurred
-     * during the specified year. Storms are returned as an array of StormData objects.
+     * during the specified year. Storms are returned as an array of StormObs objects.
      * @param year
      */
     getStormsForYear ( year ) {

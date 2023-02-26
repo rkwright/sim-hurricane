@@ -25,7 +25,7 @@
     <script src="js/StormFile.js"></script>orm
     <script src="js/HurrGui.js"></script>
     <script src="js/MetParm.js"></script>
-    <script src="js/StormParm.js"></script>
+    <script src="js/StormObs.js"></script>
     <script src="js/HurrModel.js"></script>
 
     <style>
@@ -107,15 +107,15 @@
 
         hurrGui.setupDatGui();
 
-        let storm = hurrGui.getCurrentStorm();
-        console.log("current storm: " + storm);
+        let curStorm = hurrGui.getCurrentStorm();
+        console.log("current storm: " + curStorm);
 
-        hurrPlot.plotStormTrack( storm );
+        hurrPlot.plotStormTrack( curStorm );
 
         hurrModel.initArrays();
-        hurrModel.initialise( storm );
+        hurrModel.initialise( curStorm );
 
-        stormFile.createStormArray( hurrModel.stormArray );
+        hurrModel.stormObsArray = stormFile.createStormObs( curStorm );
 
     }
 
@@ -123,8 +123,6 @@
      *  Initialize the current model run and kick it off
      */
     function runStorm( storm ) {
-        hurrModel.initArrays( storm );
-        hurrModel.initialise( storm );
 
         // Start the animation
         //animateScene();
