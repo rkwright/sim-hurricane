@@ -82,8 +82,12 @@ class HurrModel {
 
         // allocate the equatorial array of pointers
         this.metData = []; //(CMetParm **) new (CMetParm *[ Math.round(360.0 / this.dataNodeStep) ]);
-        for ( let  n=0; n<Math.round(360.0 / this.dataNodeStep); n++ )
+        for ( let  k=0; k<Math.round(360.0 / this.dataNodeStep); k++ ) {
             this.metData.push( [] );
+            for ( let n=0; n<Math.round(180.0 / this.dataNodeStep); n++ ) {
+                this.metData[k][n] = new MetData();
+            }
+        }
 
         // set up the two arrays that hold the pre-calculated angles and distances to the sample
         // points for each time-step
@@ -117,10 +121,10 @@ class HurrModel {
         this.sampleData = [];   //(CMetParm **) new (CMetParm *[ this.nAngularSamples ]);
         for ( let i = 0; i < this.nAngularSamples; i++ ) {
 
-            // allocate the ray of MetParm for the time-step data
+            // allocate the ray of MetData for the time-step data
             this.sampleData[i] = [];   // (CMetParm *) new CMetParm[this.nRadialSamples];
             for ( let j = 0; j < this.nRadialSamples; j++ ) {
-                this.sampleData[i].push( new MetParm() );
+                this.sampleData[i].push( new MetData() );
             }
         }
 
@@ -307,7 +311,7 @@ class HurrModel {
             }
         }
 
-        this.accumulateData();
+       this.accumulateData();
 
         return false;
     }
@@ -358,27 +362,6 @@ class HurrModel {
         this.eyeY = Math.lerp( stormObs.y, prevStormObs.y, prop );
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
-
-        return true;
-    }
-
-    /**
-     * Interpolates the two values to obtain the linear interpolation for the
-     * new value.  Interpolates between the values if flag is false, else
-     *    does backwards interpolation.
-     */
-
-    interpolate (a, b, prop, newValue, missing, bTween) {
-        if (a === StormFile.MISSING || b === StormFile.MISSING)
-            return false;
-
-        let slope = b - a;
-        if (bTween) {
-            newValue = a + slope * prop;
-        }
-        else {
-            newValue = a - slope * prop;
-        }
 
         return true;
     }
@@ -489,19 +472,16 @@ class HurrModel {
         let stepKM = this.carto.degToMeters(this.dataNodeStep) / 1000.0;
         let maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
 
-        // clear all the old windfields
-        let met;
+        // clear all the old windfields and ensure the MetData is allocated
         for ( let k = 0; k < Math.round(360.0 / this.dataNodeStep); k++ ) {
-            if ( this.metData[k] !== undefined ) {
-                for ( let n=0; n< Math.round(180.0 / this.dataNodeStep); n++ ) {
-                    met = this.metData[k][n];
-                    met.xVel = 0.0;
-                    met.yVel = 0.0;
-                    met.velocity = 0.0;
-                }
+            for ( let n=0; n<Math.round(180.0 / this.dataNodeStep); n++ ) {
+                let met = this.metData[k][n];
+                met.xVel = 0;
+                met.yVel = 0;
+                met.velocity = 0;
             }
-
         }
+
         // now oscillate back and forth in longitude and accumulate the detailed
         // time step data into the nodal grid
 
@@ -523,7 +503,7 @@ class HurrModel {
 
             // see if we have already allocated this meridian. If not, do so now
             if (this.metData[nMeridian + index] === undefined)
-                this.metData[nMeridian + index] = new MetParm.MetParm[Math.round(180.0 / this.dataNodeStep)];
+                this.metData[nMeridian + index] = new MetData[Math.round(180.0 / this.dataNodeStep)];
 
             // now find the upper and lower bounds that need to be updated
 
@@ -538,7 +518,7 @@ class HurrModel {
             let weight;
 
             for ( let n = -nRangeY; n < nRangeY; n++) {
-                met = this.metData[nMeridian + index][nCenterY + n];
+                let met = this.metData[nMeridian + index][nCenterY + n];
                 nodeMerc = this.carto.latlonToMerc(lon, lat);
                 xNode = nodeMerc.x;
                 yNode = nodeMerc.y;
@@ -595,7 +575,7 @@ class HurrModel {
      * @param y
      * @param rPos          X-indicies of the four closest points
      * @param aPos          Y-indicies of the four closest points
-     * @returns             number of closest points
+     * @returns             number of the closest points
      */
     findClosest  (x, y, rPos, aPos) {
 
