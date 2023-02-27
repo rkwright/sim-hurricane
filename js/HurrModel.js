@@ -65,18 +65,15 @@ class HurrModel {
         this.rateOfIncrease = 0;			// rate of increase of in RMAX over land (km/hr)
         this.translationalSpeed = 0;	// speed that eye is moving (m/s)
 
+        this.modelType = HurrModel.enModelType[0];
+
         //this.nTimeSteps = 0;
         this.dTimeStep = 0;
         this.dt = HurrModel.TIME_STEP;
-        this.modelType = HurrModel.enModelType[0];
-
-        /*
-        this.xMinPlan = 0;
-        this.xMaxPlan = 0;
-        this.yMinPlan = 0;
-        this.yMaxPlan = 0;
-        */
-    };
+        this.t = 0.0;
+        this.currentTime = 0.0
+        this.accumulator = 0.0
+    }
 
     /**
      * Allocates the arrays for the hurricane simulation info
@@ -138,7 +135,7 @@ class HurrModel {
         this.initialiseFromStormObs( curStorm );
 
         this.nCurStep = 0;
-        this.curTime = 0.0;
+        //this.curTime = 0.0;
 
         //this.centreOnScreen = true;
         this.onLand = false;   // a safe assumption...
@@ -152,10 +149,10 @@ class HurrModel {
         this.signHemisphere = (this.initialPosY < 0.0) ? -1.0 : 1.0;
 
         // positions in lat/lon degrees
-        this.xNow = this.initialPosX;
-        this.yNow = this.initialPosY;
-        this.xEye = this.initialPosX;
-        this.yEye = this.initialPosY;
+        this.curX = this.initialPosX;
+        this.curY = this.initialPosY;
+        this.eyeX = this.initialPosX;
+        this.eyeY = this.initialPosY;
 
         // we need the initial central pressure in pascals
         this.centralPressurePascals = this.centralPressure * 100.0;
@@ -233,9 +230,12 @@ class HurrModel {
      * @returns {number}
      */
     timeStep () {
-
         let newTime = performance.now();
-        let deltaTime = Math.min(newTime - this.currentTime, this.MAX_RENDER_TIME);
+
+        if (this.currentTime === 0)
+            this.currentTime = newTime;
+
+        let deltaTime = Math.min(newTime - this.currentTime, HurrPlot.MAX_RENDER_TIME);
         this.currentTime = newTime;
 
         this.accumulator += deltaTime;
@@ -253,11 +253,11 @@ class HurrModel {
             n++;
         }
 
-        let alpha = this.accumulator / this.dt;
+        //let alpha = this.accumulator / this.dt;
 
         //console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
-        this.renderFunc( this.xEye, this.yEye, this.sampleData );
+        this.renderFunc( this.eyeX, this.eyeY, this.sampleData );
 
         return 0;
     }
@@ -276,8 +276,8 @@ class HurrModel {
         this.nCurStep++;
         this.curTime += this.dTimeStep;
 
-        //this.centreOnScreen = (this.xEye >= this.xMinPlan && this.xEye <= this.xMaxPlan &&
-        //                        this.yEye >= this.yMinPlan && this.yEye <= this.yMaxPlan);
+        //this.centreOnScreen = (this.eyeX >= this.xMinPlan && this.eyeX <= this.xMaxPlan &&
+        //                        this.eyeY >= this.yMinPlan && this.eyeY <= this.yMaxPlan);
         // if the storm has moved on to land, recalculate the Holland model parameters
         if (this.onLand) {
             this.centralPressurePascals = Math.min(this.centralPressurePascals + this.fillingRatePascals * this.dTimeStep, this.peripheralPressurePascals);
@@ -319,6 +319,7 @@ class HurrModel {
         let stormObs;
         let prevStormObs;
         let stormTime;
+        let kObs = 0;
 
         if (this.nCurStep === 0) {
             stormObs = this.stormObsArray[0];
@@ -327,21 +328,23 @@ class HurrModel {
 
         let curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
-        for ( let i in this.stormObsArray ) {
-            stormObs = this.stormObsArray[i];
+        for ( let k=1;  k<this.stormObsArray.length; k++ ) {
+            stormObs = this.stormObsArray[k];
 
             stormTime = stormObs.julianDay * 24 + stormObs.hour;
 
             // if we have found the right spot, interpolate the values we need
-            if (stormTime >= curTime)
+            if (stormTime >= curTime) {
+                kObs = k;
                 break;
+            }
         }
 
         // end of time?
-        if (i >= this.stormObsArray.length)
+        if ( stormTime < curTime )
             return false;
 
-        prevStormObs = this.stormObsArray[i - 1];
+        prevStormObs = this.stormObsArray[kObs - 1];
         let prevTime = prevStormObs.julianDay * 24 + prevStormObs.hour;
         let prop = (stormTime - curTime) / (stormTime - prevTime);
 
@@ -351,8 +354,8 @@ class HurrModel {
         let fwdVelocity = Math.lerp( stormObs.fwdVelocity, prevStormObs.fwdVelocity, prop );
         this.translationalSpeed = fwdVelocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
 
-        this.xEye = Math.lerp( stormObs.x, prevStormObs.x, prop );
-        this.yEye = Math.lerp( stormObs.y, prevStormObs.y, prop );
+        this.eyeX = Math.lerp( stormObs.x, prevStormObs.x, prop );
+        this.eyeY = Math.lerp( stormObs.y, prevStormObs.y, prop );
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRadians) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRadians) * this.dTimeStep;
 
@@ -401,7 +404,7 @@ class HurrModel {
         let velocity = new THREE.Vector2(0, 0);
 
         // calculate the distance from the current point to the cyclone centre
-        let polarC = this.carto.cartesianToPolarNorth( this.xNow, this.yNow, this.xEye, this.yEye );
+        let polarC = this.carto.cartesianToPolarNorth( this.curX, this.curY, this.eyeX, this.eyeY );
 
         //R2 = rDist * rDist;			// m^2
         //Ang = Math.toRad(Ang);
@@ -470,7 +473,7 @@ class HurrModel {
             }
         }
 
-        //	TRACE("%8.1f %8.1f %8.1f %8.1f %8.1f %8.1f\n", this.xNow, this.yNow, this.xEye, this.yEye, this.yVelNow, this.xVelNow );
+        //	TRACE("%8.1f %8.1f %8.1f %8.1f %8.1f %8.1f\n", this.curX, this.curY, this.eyeX, this.eyeY, this.yVelNow, this.xVelNow );
 
         return velocity;
     }
@@ -481,8 +484,8 @@ class HurrModel {
     accumulateData () {
 
         // first, find the closest meridian to the hurricane's center
-        let nMeridian = Math.round((180.0 + this.xEye) / this.dataNodeStep);
-        let nCenterY = Math.round((90.0 + this.yEye) / this.dataNodeStep);
+        let nMeridian = Math.round((180.0 + this.eyeX) / this.dataNodeStep);
+        let nCenterY = Math.round((90.0 + this.eyeY) / this.dataNodeStep);
         let stepKM = this.carto.degToMeters(this.dataNodeStep) / 1000.0;
         let maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
 
@@ -506,14 +509,14 @@ class HurrModel {
         //let nDir = 1;
         let index = 0;
 
-        let centerMerc = this.carto.latlonToMerc(this.xEye, this.yEye);
+        let centerMerc = this.carto.latlonToMerc(this.eyeX, this.eyeY);
         let xCenter = centerMerc.x;
         let yCenter = centerMerc.y;
         let xNode, yNode;
 
         // find the lat/lon of the closest node.
-        let closeLon = Math.round(this.xEye / this.dataNodeStep) * this.dataNodeStep;
-        let closeLat = Math.round(this.yEye / this.dataNodeStep) * this.dataNodeStep;
+        let closeLon = Math.round(this.eyeX / this.dataNodeStep) * this.dataNodeStep;
+        let closeLat = Math.round(this.eyeY / this.dataNodeStep) * this.dataNodeStep;
         let maxDist = Math.hypot(stepKM, stepKM) / 2.0 * 1000.0;  // in m
 
         do {

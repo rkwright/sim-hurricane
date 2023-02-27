@@ -19,6 +19,7 @@ class HurrPlot  {
     static GLOBE_DIAM = 2.0;
     static GEOM_SEGMENTS = 32;
     static GLOBE_SEGMENTS = 32;
+    static MAX_RENDER_TIME = 2.0;
 
     static SAFFIR =  [
         {cat: '5', minMPH: 157, color: 0xff6060},
@@ -101,7 +102,7 @@ class HurrPlot  {
         requestAnimationFrame(this.animateScene);
 
         // tell the hurricane model to update itself and call back to render when it can
-        //hurrModel.timeStep();
+        hurrModel.timeStep();
 
         window.plotObj.earth.rotation.y += this.rotationRate;
 
@@ -241,7 +242,7 @@ class HurrPlot  {
      * so we just update the location of the eye and set the direction
      * and scale of the arrows
      */
-    renderHurricane (eyex, eyeY, sampleData) {
+    renderHurricane (eyeX, eyeY, sampleData) {
 
     }
 
