@@ -31,7 +31,7 @@ class HurrPlot  {
         {cat: 'TD', minMPH: 33, color: 0x5dbaff}
     ];
 
-    static ROTATION_RATE = 0.001;
+    static ROTATION_RATE = 0.002;
 
     //--- Class Methods ---
     constructor () {
@@ -78,6 +78,11 @@ class HurrPlot  {
         });
     }
 
+    /**
+     *
+     * @param material
+     * @param pThis
+     */
     finishGlobe ( material, pThis ) {
         window.plotObj.earthMesh = new THREE.Mesh (pThis.earthGlobe, material );
         pThis.earth.add( window.plotObj.earthMesh );
