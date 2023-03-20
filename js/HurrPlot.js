@@ -371,8 +371,15 @@ class HurrPlot  {
      * so we just update the location of the eye and set the direction
      * and scale of the arrows
      */
-    renderHurricane ( eyeX, eyeY, metData ) {
+    renderHurricane ( eyeX, eyeY, metData, dataRect ) {
 
+        for ( let j = dataRect.x0; j < dataRect.x1; j++ ) {
+            for ( let i = dataRect.y0; i<dataRect.y1; i++ ) {
+                let met = metData[j][i];
+                let mesh = met.mesh;
+
+
+            }
+        }
     }
-
 }
