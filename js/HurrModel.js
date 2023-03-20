@@ -42,7 +42,6 @@ class HurrModel {
 
         this.gridStep = 0.5;				// in degrees
 
-        this.radiusStormInfluence = 750.0;		// radius of storm influence, in km
         this.nRadialSamples = 12;				// number of steps outward (radial) to be sampled
         this.nAngularSamples = 15;				// number of angular samples
 
@@ -53,7 +52,7 @@ class HurrModel {
 
         this.carto = new Carto();
 
-        //
+        this.radiusStormInfluence = 750.0;		// radius of storm influence, in km
         this.cycloneAzimuth = 0;			// azimuth of hurricane track (degrees clockwise from North)
         this.fillingRate = 0;				// rate at which center fills (hPa/hr)
         this.initialPosX = 0;				// intial coords of center
@@ -112,7 +111,7 @@ class HurrModel {
 
             this.samplePos[i] = [];  //(double **) new (double *[ this.nRadialSamples ]);
             for ( let j = 0; j < this.nRadialSamples; j++ ) {
-                this.samplePos[i].push( new THREE.Vector2(this.sampleDist[j] * cosAng, this.sampleDist[j] * sinAng) );
+                this.samplePos[i].push( { x: this.sampleDist[j] * cosAng, y: this.sampleDist[j] * sinAng } );
             }
         }
 
@@ -207,8 +206,6 @@ class HurrModel {
 
         // convert to the cyclone azimuth to radians
         this.cycloneAzimuthRad = Math.toRad(this.cycloneAzimuth);
-        //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRad) * this.dTimeStep;
-        //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRad) * this.dTimeStep;
 
         // convert inflow-angle to radians
         this.alpha = -this.inflowAngle - Math.PI / 2;		// was positive alpha...
@@ -219,17 +216,15 @@ class HurrModel {
         this.ATT = 1.5 * Math.pow(this.translationalSpeed, 0.63) * Math.pow(this.T0, 0.37);
 
         //----- Initial Holland model parameters
-        // B parameter - based on central pressure (in millibars)
-        this.bHolland = 1.5 + (980.0 - this.centralPressurePa / 100.0) / 120.0;
-
         // A parameter - based on distance in kilometres
         this.aHolland = Math.pow((this.radiusToMaxWindM / 1000.0), this.bHolland);
+        // B parameter - based on central pressure (in millibars)
+        this.bHolland = 1.5 + (980.0 - this.centralPressurePa / 100.0) / 120.0;
 
         // density of air (kg/m^3)
         this.airDensity = HurrModel.AIR_DENSITY;
 
         // clean up the storage arrays, as necessary
-        //this.stormTrack = [];
         this.stormObsArray = [];  // the array of StormData for this storm
     }
 
@@ -303,15 +298,9 @@ class HurrModel {
         this.curTime += this.dTimeStep;
 
        console.log("nCurStep: " + this.nCurStep + " curTime: " + this.curTime);
-        
-        //this.centreOnScreen = (this.eyeX >= this.xMinPlan && this.eyeX <= this.xMaxPlan &&
-        //                        this.eyeY >= this.yMinPlan && this.eyeY <= this.yMaxPlan);
 
         // if the storm has moved on to land, recalculate the Holland model parameters
         this.checkOnLand();
-
-        // check if the centre has filled to the peripheral pressure
-        //this.centreFilled = Math.abs(this.peripheralPressurePa - this.centralPressurePa) < HurrModel.MIN_PRESSURE_DIFFERENCE;
 
         // now calculate the windfield for the current time
         for (let i = 0; i < this.nAngularSamples; i++) {
@@ -319,7 +308,7 @@ class HurrModel {
 
             for ( let j = 0; j < this.nRadialSamples; j++ ) {
 
-               let velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
+               let velocity = this.calcWindVelocity(this.sampleDist[j], angle);
 
                 this.sampleData[i][j].xVel = velocity.x;
                 this.sampleData[i][j].yVel = velocity.y;
@@ -355,7 +344,7 @@ class HurrModel {
         let stormObs;
         let prevStormObs;
         let stormTime;
-        let kObs = 0;
+        let kObs = 1;
 
         if (this.nCurStep === 0) {
             stormObs = this.stormObsArray[0];
@@ -364,14 +353,13 @@ class HurrModel {
 
         let curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
-        for ( let k=1;  k<this.stormObsArray.length; k++ ) {
-            stormObs = this.stormObsArray[k];
+        for ( let kObs=1;  kObs<this.stormObsArray.length; kObs++ ) {
+            stormObs = this.stormObsArray[kObs];
 
             stormTime = stormObs.julianDay * 24 + stormObs.hour;
 
             // if we have found the right spot, interpolate the values we need
             if (stormTime >= curTime) {
-                kObs = k;
                 break;
             }
         }
@@ -379,7 +367,7 @@ class HurrModel {
        // console.log("stormTime: " + stormTime + "  curTime: " + curTime);
 
         // end of time?
-        if ( stormTime < curTime )
+        if ( stormTime < curTime || kObs >= this.stormObsArray.length )
             return false;
 
         prevStormObs = this.stormObsArray[kObs - 1];
@@ -397,7 +385,10 @@ class HurrModel {
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRad) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRad) * this.dTimeStep;
 
-        this.deltPressure = this.peripheralPressurePa - stormObs.pressure * 100.0;
+        this.pressure = Math.lerp( prevStormObs.pressure, stormObs.pressure, prop );
+
+        this.deltPressure = Math.lerp( prevStormObs.pressure - this.peripheralPressurePa,
+                                        stormObs.pressure  - this.peripheralPressurePa, prop );
 
         return true;
     }
@@ -406,7 +397,7 @@ class HurrModel {
      * Calculate the cyclone wind velocity, pressure and pressure gradients
      * at a specified point at the current time
      */
-    calcWindSpeeds (rDist, Ang) {
+    calcWindVelocity ( rDist, ang ) {
 
         let AziSite = 0;
         let beta = 0;
@@ -420,16 +411,13 @@ class HurrModel {
         let Rr = 0;
         let eRr = 0;
         let VelC2 = 0;
-        let velocity = new THREE.Vector2(0, 0);
+        let velocity = { x: 0, y: 0 };
 
         // calculate the distance from the current point to the cyclone centre
-        this.curX = this.eyeX + Math.cos(Ang) * rDist / Carto.METERPERDEG;
-        this.curY = this.eyeY + Math.sin(Ang) * rDist / Carto.METERPERDEG;
+        this.curX = this.eyeX + Math.cos(ang) * rDist / Carto.METERPERDEG;
+        this.curY = this.eyeY + Math.sin(ang) * rDist / Carto.METERPERDEG;
 
         let polarC = this.carto.cartesianToPolarNorth( this.curX, this.curY, this.eyeX, this.eyeY );
-
-        //R2 = rDist * rDist;			// m^2
-        //Ang = Math.toRad(Ang);
 
         // impose a lower limit on the value of rdist. Set the pressure to
         // P0 and the wind velocity to 0 inside this limit
@@ -468,7 +456,7 @@ class HurrModel {
             // Vel = 0.8D0*Vel   TODO??
 
             //	wind azimuth at cell centre
-            AziSite = Ang + this.signHemisphere * this.alpha;  // was minus this.sign..etc
+            AziSite = ang + this.signHemisphere * this.alpha;  // was minus this.sign..etc
 
             // angle beta
             beta = AziSite - this.cycloneAzimuthRad;
