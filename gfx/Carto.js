@@ -13,9 +13,9 @@
 class Carto  {
 
     //--- constants ---
-    static REVISION = '1.1.0';
+    static REVISION = '1.1.1';
 
-    static METERPERDEG = 111195.0;  // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
+    static METERPERDEG = 111317.0;           // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
     static radius_major = 6378137.0;         // Equatorial Radius, WGS84
     static radius_minor = 6356752.314245179; // defined as constant
     static f = 298.257223563;                // 1/f=(a-b)/a , a=r_major, b=r_minor

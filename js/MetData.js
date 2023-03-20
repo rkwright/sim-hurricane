@@ -11,7 +11,7 @@
 class MetData {
 
 	// constants
-	REVISION = "1.0.0";
+	REVISION = "1.1.0";
 
 	/**
 	 * @constructor
@@ -25,5 +25,9 @@ class MetData {
 		this.maxVelocity = 0.0;
 		this.pressure = 0.0;
 		this.minPressure = 0.0;
+
+		this.lat = 0.0;
+		this.lon = 0.0;
+		this.mesh = {};
 	}
 }

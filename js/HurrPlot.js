@@ -9,7 +9,7 @@
 
 //<script src="gfx/gfx-scene.js"></script>
 
-'use strict';
+//'use strict';
 class HurrPlot  {
 
     // ----- Constants ------
@@ -20,6 +20,14 @@ class HurrPlot  {
     static GEOM_SEGMENTS = 32;
     static GLOBE_SEGMENTS = 32;
     static MAX_RENDER_TIME = 2.0;
+
+    static TIPY        = 0.75;	// position in Y of arrow-head tip
+    static TIPX        = 0.0;	// position in X of arrow-head tip
+    static BASE        = 0.1;	// base of arrow-head in Y
+    static HEAD_WIDTH  = 0.3;	// half-width of the arrow-head in X
+    static SHAFT_WIDTH = 0.1;	// half-width of the arrow-shaft in X
+    static SHAFT_END   = -0.5;	// end of the arrow-shaft in Y
+    static THICKNESS   = 0.5;	// half-thickness of the arrow in Z
 
     static SAFFIR =  [
         {cat: '5', minMPH: 157, color: 0xff6060},
@@ -52,6 +60,8 @@ class HurrPlot  {
         this.rotationRate =  0.0;
 
         this.carto = new Carto();
+
+        this.arrowMesh = this.createArrowMesh();
 
         window.plotObj = this;
     }
@@ -242,12 +252,126 @@ class HurrPlot  {
     }
 
     /**
+     *  Creates an arrow and returns the mesh
+     */
+    createArrowMesh () {
+
+        const TIPY            = 0.75;	// position in Y of arrow-head tip
+        const TIPX            = 0.0;	// position in X of arrow-head tip
+        const BASE            = 0.1;	// base of arrow-head in Y
+        const HEAD_WIDTH      = 0.3;	// half-width of the arrow-head in X
+        const NEG_HEAD_WIDTH  = -0.3;	// half-width of the arrow-head in X
+        const SHAFT_WIDTH     = 0.1;	// half-width of the arrow-shaft in X
+        const NEG_SHAFT_WIDTH = -0.1;	// half-width of the arrow-shaft in X
+        const SHAFT_END       = -0.5;	// end of the arrow-shaft in Y
+        const THICKNESS       = 0.1;	// half-thickness of the arrow in Z
+        const NEG_THICKNESS   = -0.1;	// half-thickness of the arrow in Z
+
+        // head of the arrow
+        let   	vA = { x:NEG_HEAD_WIDTH, y:BASE, z:THICKNESS };
+        let		vB = { x:TIPX, y:TIPY, z:THICKNESS };
+        let		vC = { x:HEAD_WIDTH, y:BASE, z:THICKNESS };
+        let		vD = { x:NEG_HEAD_WIDTH, y:BASE, z:NEG_THICKNESS };
+        let		vE = { x:TIPX, y:TIPY, z:NEG_THICKNESS };
+        let		vF = { x:HEAD_WIDTH, y:BASE, z:NEG_THICKNESS };
+
+        // the tail, i.e. the box part of the arrow
+        let		vG = { x:NEG_SHAFT_WIDTH, y:BASE, z:THICKNESS };
+        let		vH = { x:SHAFT_WIDTH, y:BASE, z:THICKNESS };
+        let		vI = { x:NEG_SHAFT_WIDTH, y:SHAFT_END, z:THICKNESS };
+        let		vJ = { x:SHAFT_WIDTH, y:SHAFT_END, z:THICKNESS };
+        let		vK = { x:NEG_SHAFT_WIDTH, y:BASE, z:NEG_THICKNESS };
+        let		vL = { x:SHAFT_WIDTH, y:BASE, z:NEG_THICKNESS };
+        let		vM = { x:NEG_SHAFT_WIDTH, y:SHAFT_END, z:NEG_THICKNESS };
+        let		vN = { x:SHAFT_WIDTH, y:SHAFT_END, z:NEG_THICKNESS };
+
+        let nFaces = 18;
+        let nVerticesPerFace = 3;
+        let coordsPerVertex = 3;
+        let nVerts = nFaces * nVerticesPerFace * coordsPerVertex;
+
+        const arrowVerts = new Float32Array(nVerts);
+        const arrowNorms = new Float32Array(nVerts);
+        let  counter = { n: 0 };
+
+        // the head of the arrow
+        this.triangleFace( vC, vB, vA, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vB, vC, vF, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vB, vF, vE, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vC, vA, vD, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vC, vD, vF, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vA, vB, vD, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vB, vE, vD, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vE, vF, vD, arrowVerts, arrowNorms, counter );         //don't need the bottom of the arrow!
+
+        // the tail, i.e. the box part of the arrow
+        this.triangleFace( vG, vI, vJ, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vG, vJ, vH, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vH, vJ, vN, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vH, vN, vL, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vI, vG, vM, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vM, vG, vK, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vJ, vI, vM, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vJ, vM, vN, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vL, vN, vM, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vM, vK, vL, arrowVerts, arrowNorms, counter  );
+
+        const arrowGeometry = new THREE.BufferGeometry();
+        arrowGeometry.addAttribute('position', new THREE.BufferAttribute(arrowVerts, 3));
+        arrowGeometry.addAttribute('normal', new THREE.BufferAttribute(arrowNorms, 3 ));
+
+        //const arrowColors = [];
+        //for ( let i=0; i<nVerts; i++ ) {
+        //    arrowColors.push( 255, 0, 0 );
+        //}
+        const material = new THREE.MeshLambertMaterial({  color: 0xffffff, flatShading: true });
+        let arrowMesh = new THREE.Mesh(arrowGeometry, material);
+        arrowMesh.rotateX(Math.HALF_PI);
+
+        return arrowMesh;
+    }
+
+    /**
+     * Defines single, normalized triangle face
+     *
+     * @param vA
+     * @param vB
+     * @param vC
+     * @param arrowVerts
+     * @param arrowNorms
+     * @param counter
+     */
+    triangleFace ( vA, vB, vC, arrowVerts, arrowNorms,  counter ) {
+        let n = counter.n;
+        arrowVerts[n++] = vA.x;
+        arrowVerts[n++] = vA.y;
+        arrowVerts[n++] = vA.z;
+        arrowVerts[n++] = vB.x;
+        arrowVerts[n++] = vB.y;
+        arrowVerts[n++] = vB.z;
+        arrowVerts[n++] = vC.x;
+        arrowVerts[n++] = vC.y;
+        arrowVerts[n++] = vC.z;
+
+        let normal = Math.calcNormal(vA, vB, vC)
+
+        n = counter.n;
+        for ( let k=0;k<3; k++ ) {
+            arrowNorms[n++] = normal.x;
+            arrowNorms[n++] = normal.y;
+            arrowNorms[n++] = normal.z;
+        }
+
+        counter.n = n;
+    }
+
+    /**
      * Called by the hurricane model to have the sample data rendered
      * In this case, the wind arrows and eye are already in existence
      * so we just update the location of the eye and set the direction
      * and scale of the arrows
      */
-    renderHurricane (eyeX, eyeY, sampleData) {
+    renderHurricane ( eyeX, eyeY, metData ) {
 
     }
 

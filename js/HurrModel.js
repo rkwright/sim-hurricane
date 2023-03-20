@@ -19,7 +19,7 @@ class HurrModel {
     //constants
     static REVISION = '1.0';
 
-    static PERIPHERAL_PRESSURE =        1013.0;	// in mB
+    static PERIPHERAL_PRESSURE =        1013.0;	// a standard atmosphere in mB
     static INFLOW_ANGLE =                20.0;
     static CORIOLIS =                    2.0e-5;	// Coriolis parameter in the tropics (1/s)
     static MIN_PRESSURE_DIFFERENCE =     0.1;
@@ -58,7 +58,7 @@ class HurrModel {
         this.fillingRate = 0;				// rate at which center fills (hPa/hr)
         this.initialPosX = 0;				// intial coords of center
         this.initialPosY = 0;
-        this.peripheralPressure = 0;	// pressure outside hurricane proper
+        this.peripheralPressure = HurrModel.PERIPHERAL_PRESSURE;	// pressure outside hurricane proper
         this.centralPressure = 0;		// initial pressure at the eye
         this.radiusToMaxWind = 0;		// radius from eye to max windspeed
         this.rateOfIncrease = 0;			// rate of increase of in RMAX over land (km/hr)
@@ -194,7 +194,7 @@ class HurrModel {
         this.rMaxMin = 2000.0;      // 2 km
 
         // we need it converted to metres, but don't let it over-range
-        this.radiusToMaxWindMetres = Math.max(this.radiusToMaxWind * 1000.0, this.rMaxMax, this.rMaxMin);
+        this.radiusToMaxWindM = Math.max(this.radiusToMaxWind * 1000.0, this.rMaxMax, this.rMaxMin);
 
         // hardcode the inflow angle (why?)
         this.inflowAngle = Math.toRad(HurrModel.INFLOW_ANGLE);
@@ -302,7 +302,7 @@ class HurrModel {
         this.nCurStep++;
         this.curTime += this.dTimeStep;
 
-       /// console.log("nCurStep: " + this.nCurStep + " curTime: " + this.curTime);
+       console.log("nCurStep: " + this.nCurStep + " curTime: " + this.curTime);
         
         //this.centreOnScreen = (this.eyeX >= this.xMinPlan && this.eyeX <= this.xMaxPlan &&
         //                        this.eyeY >= this.yMinPlan && this.eyeY <= this.yMaxPlan);
@@ -319,7 +319,7 @@ class HurrModel {
 
             for ( let j = 0; j < this.nRadialSamples; j++ ) {
 
-                let velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
+               let velocity = this.calcWindSpeeds(this.sampleDist[j], angle);
 
                 this.sampleData[i][j].xVel = velocity.x;
                 this.sampleData[i][j].yVel = velocity.y;
@@ -397,6 +397,8 @@ class HurrModel {
             //this.TSSinAzimuth = this.translationalSpeed * Math.sin(this.cycloneAzimuthRad) * this.dTimeStep;
             //this.TSCosAzimuth = this.translationalSpeed * Math.cos(this.cycloneAzimuthRad) * this.dTimeStep;
 
+        this.deltPressure = this.peripheralPressurePa - stormObs.pressure * 100.0;
+
         return true;
     }
 
@@ -421,6 +423,9 @@ class HurrModel {
         let velocity = new THREE.Vector2(0, 0);
 
         // calculate the distance from the current point to the cyclone centre
+        this.curX = this.eyeX + Math.cos(Ang) * rDist / Carto.METERPERDEG;
+        this.curY = this.eyeY + Math.sin(Ang) * rDist / Carto.METERPERDEG;
+
         let polarC = this.carto.cartesianToPolarNorth( this.curX, this.curY, this.eyeX, this.eyeY );
 
         //R2 = rDist * rDist;			// m^2
@@ -428,7 +433,7 @@ class HurrModel {
 
         // impose a lower limit on the value of rdist. Set the pressure to
         // P0 and the wind velocity to 0 inside this limit
-        if (rDist / this.radiusToMaxWindM < 0.05) {
+        if ((rDist / this.radiusToMaxWindM) < 0.05) {
             velocity.x = 0.0;
             velocity.y = 0.0;
         }
@@ -480,9 +485,9 @@ class HurrModel {
             // are defined in terms of counter-clockwise rotation from "east" so we have to correct for this
 
             if (Vel >= this.ATT) {
-                Vel += this.ATT * Math.cos(this.carto.azimuthToRad(beta));          // - HALF_PI );
-                velocity.vx = Vel * Math.sin(this.carto.azimuthToRad(AziSite));     // - HALF_PI );
-                velocity.vy = Vel * Math.cos(this.carto.azimuthToRad(AziSite));     // - HALF_PI);
+                Vel += this.ATT * Math.cos(this.carto.azimuthToRadians(beta));          // - HALF_PI );
+                velocity.vx = Vel * Math.sin(this.carto.azimuthToRadians(AziSite));     // - HALF_PI );
+                velocity.vy = Vel * Math.cos(this.carto.azimuthToRadians(AziSite));     // - HALF_PI);
             }
             else {
                 velocity.vx = 0.0;
@@ -499,12 +504,12 @@ class HurrModel {
     accumulateData () {
 
         // first, find the closest meridian to the hurricane's center
-        let nMeridian = Math.round((180.0 + this.eyeX) / this.gridStep);
-        let nCenterY = Math.round((90.0 + this.eyeY) / this.gridStep);
+        let meridianX = Math.round((180.0 + this.eyeX) / this.gridStep);
+        let parallelY = Math.round((90.0 + this.eyeY) / this.gridStep);
         let stepKM = this.carto.degToMeters(this.gridStep) / 1000.0;
         let maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
 
-        // clear all the old windfields and ensure the MetData is allocated
+        // clear all the old windfields
         for ( let k = 0; k < Math.round(360.0 / this.gridStep); k++ ) {
             for ( let n=0; n<Math.round(180.0 / this.gridStep); n++ ) {
                 let met = this.metData[k][n];
@@ -517,10 +522,12 @@ class HurrModel {
         // now oscillate back and forth in longitude and accumulate the detailed
         // time step data into the nodal grid
 
+        let x0 = this.carto.latlonToMerc(0, 89.5);
+        let x1 = this.carto.latlonToMerc(359, -89.5);
+
         //let bDone = false;
         //let nDir = 1;
         let index = 0;
-
         let centerMerc = this.carto.latlonToMerc(this.eyeX, this.eyeY);
         let xCenter = centerMerc.x;
         let yCenter = centerMerc.y;
@@ -531,14 +538,11 @@ class HurrModel {
         let closeLat = Math.round(this.eyeY / this.gridStep) * this.gridStep;
         let maxDist = Math.hypot(stepKM, stepKM) / 2.0 * 1000.0;  // in m
 
+        console.log("closeLon: " + closeLon + " closeLat: " + closeLat);
+
         do {
 
-            // see if we have already allocated this meridian. If not, do so now
-            if (this.metData[nMeridian + index] === undefined)
-                this.metData[nMeridian + index] = new MetData[Math.round(180.0 / this.gridStep)];
-
             // now find the upper and lower bounds that need to be updated
-
             let angle = Math.atan((index * stepKM) / this.radiusStormInfluence);
             let nRangeY = Math.round(Math.abs(Math.cos(angle)) * this.radiusStormInfluence / stepKM);
             let rPos = [];
@@ -550,10 +554,13 @@ class HurrModel {
             let weight;
 
             for ( let n = -nRangeY; n < nRangeY; n++) {
-                let met = this.metData[nMeridian + index][nCenterY + n];
+                let met = this.metData[meridianX + index][parallelY + n];
                 nodeMerc = this.carto.latlonToMerc(lon, lat);
                 xNode = nodeMerc.x;
                 yNode = nodeMerc.y;
+
+                console.log(" n: " + n + " lat: " + lat + " meridianX + index: " + (meridianX + index) +
+                    " parallelY + n: " + (parallelY + n) + "xVel: " + met.xVel + " yVel: " + met.yVel );
 
                 // now find the four closest sampled points
                 let nClose = this.findClosest(xNode - xCenter, yNode - yCenter, rPos, aPos);
