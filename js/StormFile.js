@@ -64,6 +64,7 @@ class StormFile {
 
     constructor () {
 
+        this.storms = [];
         this.julian = new Julian();
         window.stormThis = this;
     }
@@ -148,6 +149,7 @@ class StormFile {
                 this.jsonData.storms.splice( i, 1)
              }
             else {
+                this.storms.push( new Storm( storm, this.julian ));
                 i++;
             }
         }
@@ -169,37 +171,6 @@ class StormFile {
         }
 
         return false;
-    }
-
-    /**
-     * Create the array of StormObs.  This is a half-way attempt to provide a facade around the model so
-     * differnt hurricane databases cane be used later.
-     * @param  curStorm
-     * @returns {number}
-     */
-    createStormObs ( curStorm ) {
-        let stormObsArray = [];  // clear the array
-
-        for ( let i in curStorm.entries ) {
-            let entry = curStorm.entries[i];
-            let stormObs = new StormObs();
-
-            stormObs.x = entry[StormFile.LON];
-            stormObs.y = entry[StormFile.LAT];
-            stormObs.pressure = entry[StormFile.MINPRESS];
-            stormObs.fwdVelocity = -1;  // compute!
-            stormObs.heading = -1;      // compute!
-            stormObs.windspeed = entry[StormFile.MAXWIND];
-            stormObs.day = entry[StormFile.DAY];
-            stormObs.month = entry[StormFile.MONTH];
-            stormObs.year = entry[StormFile.YEAR];
-            stormObs.julianDay = this.julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH], entry[StormFile.YEAR],);;
-            stormObs.hour = entry[StormFile.TIME];    // 0,600,1200,1800
-
-            stormObsArray.push( stormObs );
-        }
-
-        return stormObsArray;
     }
 
     /**

@@ -58,14 +58,14 @@ class HurrModel {
 
         this.carto = new Carto();
 
-        this.radiusStormInfluence = 750.0;		// radius of storm influence, in km
+        this.radiusStormInfluence = 750.0;	// radius of storm influence, in km
         this.cycloneAzimuth = 0;			// azimuth of hurricane track (degrees clockwise from North)
-        this.fillingRatePa = 0;				// rate at which center fills (hPa/hr)
-        this.peripheralPressurePa = 0;	// pressure outside hurricane proper
-        this.centralPressurePa = 0;		// initial pressure at the eye
-        this.radiusToMaxWind = 0;		// radius from eye to max windspeed
+        this.fillingRate = 0;				// rate at which center fills (hPa/hr)
+        this.peripheralPressure = 0;	    // pressure outside hurricane proper
+        this.centralPressure = 0;		    // initial pressure at the eye
+        this.radiusToMaxWind = 0;		    // radius from eye to max windspeed
         this.rateOfIncrease = 0;			// rate of increase of in RMAX over land (km/hr)
-        this.translationalSpeed = 0;	// speed that eye is moving (m/s)
+        this.translationalSpeed = 0;	    // speed that eye is moving (m/s)
 
         this.modelType = HurrModel.enModelType[0];
 
@@ -133,16 +133,20 @@ class HurrModel {
     /**
      * Initialise on a per-storm basis.
      *
-     * @param curStorm
+     * @param stormFile
+     * @param index
      */
-    initialise ( curStorm ) {
+    initialise ( stormFile, index ) {
 
-        this.startStorm = stormObs.julianDay * 24 + stormObs.hour;
+        let curStorm = stormFile.storms[index];
+        this.startStorm = curStorm.obs[0].julianDay * 24 + curStorm.obs[0].hour;
+        let lastObs = curStorm.obs[curStorm.obs.length-1];
+        this.endStorm = lastObs.julianDay * 24 + lastObs.hour;
 
-        this.cycloneAzimuthRad = Math.toRad( curStorm.heading );
-        this.translationalSpeed = curStorm.fwdVelocity * 1680.0 / 3600.0;   // knots to m/s
-        this.initialPosX = curStorm.x;
-        this.initialPosY = curStorm.y;
+        this.cycloneAzimuth = Math.toRad( curStorm.heading );
+        this.translationalSpeed = curStorm.velocity * 1680.0 / 3600.0;   // knots to m/s
+        this.initialPosX = curStorm.lon;
+        this.initialPosY = curStorm.lat;
 
         this.nCurStep = 0;              // number of times update has been called, i.e. "steps"
         this.curTime = 0.0;
@@ -152,10 +156,15 @@ class HurrModel {
         this.signHemisphere = (this.initialPosY < 0.0) ? -1.0 : 1.0;
 
         // positions in lat/lon degrees
-        this.curX = curStorm.entries[0][StormFile.LON];
-        this.curY = curStorm.entries[0][StormFile.LAT];
+        this.curX = curStorm.obs[0].lon;
+        this.curY = curStorm.obs[0].lat;
         this.eyeX = this.curX;
         this.eyeY = this.curY;
+
+        this.xMinPlan = 0.0;
+        this.xMaxPlan = 1000000.0;
+        this.yMinPlan = 0.0;
+        this.yMaxPlan = 1000000.0;
 
         this.modelDimX  = HurrModel.DIMX;
         this.modelDimY  = HurrModel.DIMY;
@@ -166,20 +175,21 @@ class HurrModel {
         this.dY = (this.yMaxPlan - this.yMinPlan) / this.modelDimY;
 
         // set the time step size so that the cyclone covers one grid square in one time step
-        this.dTimeStep  = Math.min(this.dX, this.dY) / this.translationalSpeed;
+        this.dTimeStep  = 3600;  // seconds Math.min(this.dX, this.dY) / this.translationalSpeed;
         this.nTimeSteps = Math.round(Math.hypot(this.dX, this.dY) / this.dTimeStep);
 
         // we need the peripheral pressure, in pascals
-        this.peripheralPressurePa = HurrModel.PERIPHERAL_PRESSURE * 100.0;
+        this.peripheralPressure = HurrModel.PERIPHERAL_PRESSURE * 100.0;
+        this.centralPressure = curStorm.obs[0].pressure * 100.0;  // pascals
 
-        this.deltPressurePa = this.peripheralPressurePa - this.centralPressurePa;
+        this.deltPressure = this.peripheralPressure - this.centralPressure;
 
         // set limits on RMax ( in metres )
         this.rMaxMax = 200000.0;    // 200 km
         this.rMaxMin = 2000.0;      // 2 km
 
         // we need it converted to metres, but don't let it over-range
-        this.radiusToMaxWindM = Math.max(this.radiusToMaxWind * 1000.0, this.rMaxMax, this.rMaxMin);
+        this.radiusToMaxWind = Math.max(this.radiusToMaxWind * 1000.0, this.rMaxMax, this.rMaxMin);
 
         // hardcode the inflow angle (why?)
         this.inflowAngle = Math.toRad(HurrModel.INFLOW_ANGLE);
@@ -196,15 +206,15 @@ class HurrModel {
 
         //----- Initial Holland model parameters
         // B parameter - based on central pressure (in millibars)
-        this.bHolland = 1.5 + (980.0 - this.centralPressurePa / 100.0) / 120.0;
+        this.bHolland = 1.5 + (980.0 - this.centralPressure / 100.0) / 120.0;
         // A parameter - based on distance in kilometres
-        this.aHolland = Math.pow((this.radiusToMaxWindM / 1000.0), this.bHolland);
+        this.aHolland = Math.pow((this.radiusToMaxWind / 1000.0), this.bHolland);
 
         // density of air (kg/m^3)
         this.airDensity = HurrModel.AIR_DENSITY;
 
         // clean up the storage arrays, as necessary
-        this.stormObsArray = [];  // the array of StormData for this storm
+       // this.stormObsArray = [];  // the array of StormData for this storm
     }
 
     /**
@@ -279,7 +289,9 @@ class HurrModel {
 
             for ( let j = 0; j < this.nRadialSamples; j++ ) {
 
-               let velocity = this.calcWindVelocity(this.sampleDist[j], angle);
+                let velocity = this.calcWindVelocity(this.sampleDist[j], angle);
+
+              //  console.log("velocity: " + velocity.x + " " + velocity.y);
 
                 this.sampleData[i][j].xVel = velocity.x;
                 this.sampleData[i][j].yVel = velocity.y;
@@ -299,12 +311,12 @@ class HurrModel {
      */
     checkOnLand() {
         if (this.onLand) {
-            this.centralPressurePa = Math.min(this.centralPressurePa + this.fillingRatePa * this.dTimeStep, this.peripheralPressurePa);
-            this.radiusToMaxWindM = this.radiusToMaxWindM + this.rateOfIncreaseM * this.dTimeStep;
-            this.radiusToMaxWindM = Math.clamp(this.radiusToMaxWindM, this.rMaxMax, this.rMaxMin);
-            this.deltPressurePa = this.peripheralPressurePa - this.centralPressurePa;
-            this.bHolland = 1.5 + (980.0 - this.centralPressurePa / 100.0) / 120.0;
-            this.aHolland = Math.pow((this.radiusToMaxWindM / 1000.0), this.bHolland);
+            this.centralPressure = Math.min(this.centralPressure + this.fillingRate * this.dTimeStep, this.peripheralPressure );
+            this.radiusToMaxWind = this.radiusToMaxWind + this.rateOfIncreaseM * this.dTimeStep;
+            this.radiusToMaxWind = Math.clamp(this.radiusToMaxWind, this.rMaxMax, this.rMaxMin);
+            this.deltPressure = this.peripheralPressure - this.centralPressure;
+            this.bHolland = 1.5 + (980.0 - this.centralPressure / 100.0) / 120.0;
+            this.aHolland = Math.pow((this.radiusToMaxWind / 1000.0), this.bHolland);
         }
     }
 
@@ -315,18 +327,15 @@ class HurrModel {
         let stormObs;
         let prevStormObs;
         let stormTime;
-        let kObs = 1;
-
-        if (this.nCurStep === 0) {
-            stormObs = this.stormObsArray[0];
-            this.startStorm = stormObs.julianDay * 24 + stormObs.hour;
-        }
+        let kObs;
+        let storm = stormFile.storms[0];
+        this.startStorm = storm.obs[0].julianDay * 24 + storm.obs[0].hour;
 
         let curTime = this.startStorm + this.nCurStep * this.dTimeStep / 3600.0;
 
-        for ( kObs=1;  kObs<this.stormObsArray.length; kObs++ ) {
+        for ( kObs=1;  kObs<storm.obs.length; kObs++ ) {
 
-            stormTime = this.stormObsArray[kObs].julianDay * 24 + stormObs.hour;
+            stormTime = storm.obs[kObs].julianDay * 24 + storm.obs[kObs].hour;
 
             // if we have found the next storm, interpolate the values we need
             if (stormTime >= curTime) {
@@ -334,28 +343,29 @@ class HurrModel {
             }
         }
 
-       // console.log("stormTime: " + stormTime + "  curTime: " + curTime);
-
         // end of time?
-        if ( stormTime < curTime || kObs >= this.stormObsArray.length )
+        if ( stormTime < curTime || kObs >= storm.obs.length )
             return false;
 
-        prevStormObs = this.stormObsArray[kObs - 1];
+        stormObs = storm.obs[kObs];
+        prevStormObs = storm.obs[kObs - 1];
         let prevTime = prevStormObs.julianDay * 24 + prevStormObs.hour;
-        let prop = (stormTime - curTime) / (stormTime - prevTime);
+        let prop = (curTime - prevTime) / (stormTime - prevTime);
 
-        this.cycloneAzimuthRad = Math.lerp( stormObs.heading, prevStormObs.heading, prop );
+        this.cycloneAzimuth = Math.lerp( prevStormObs.heading, stormObs.heading, prop );
 
-        let fwdVelocity = Math.lerp( stormObs.fwdVelocity, prevStormObs.fwdVelocity, prop );
-        this.translationalSpeed = fwdVelocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
+        let velocity = Math.lerp( prevStormObs.velocity, stormObs.velocity, prop );
+        this.translationalSpeed = velocity * Carto.NAUTICALMILE_TO_METER / 3600.0;   // knots to m/s
 
-        this.eyeX = Math.lerp( stormObs.x, prevStormObs.x, prop );
-        this.eyeY = Math.lerp( stormObs.y, prevStormObs.y, prop );
+        this.eyeX = Math.lerp( prevStormObs.lon, stormObs.lon, prop );
+        this.eyeY = Math.lerp( prevStormObs.lat, stormObs.lat, prop );
 
         this.pressure = Math.lerp( prevStormObs.pressure, stormObs.pressure, prop );
 
-        this.deltPressure = Math.lerp( prevStormObs.pressure - this.peripheralPressurePa,
-                                        stormObs.pressure  - this.peripheralPressurePa, prop );
+        this.deltPressure = Math.lerp( prevStormObs.pressure - this.peripheralPressure,
+                                        stormObs.pressure  - this.peripheralPressure, prop );
+
+        console.log("stormTime: " + stormTime + "  curTime: " + curTime + " eyeX: " + this.eyeX + " eyeY: " + this.eyeY);
 
         return true;
     }
@@ -379,19 +389,19 @@ class HurrModel {
         let polarC = this.carto.cartesianToPolarNorth( this.curX, this.curY, this.eyeX, this.eyeY );
 
         // impose a lower limit on the value of rdist. Set the pressure to P0 and the wind velocity to 0 inside this limit
-        if ((rDist / this.radiusToMaxWindM) < 0.05) {
+        if ((rDist / this.radiusToMaxWind) < 0.05) {
             velocity.x = 0.0;
             velocity.y = 0.0;
         }
         else {
             if (this.modelType === "NWS23")
-                vel = this.extracted(Rr, polarC, eRr, VelC2, Rf2, vel);
+                vel = this.getNWS23Velocity( polarC );
             else
-                vel = this.updateHollandVelocity( Rkm, polarC, Rf2, Rb, earb, PressDiff, vel );
+                vel = this.getHollandVelocity( polarC  );
 
             //	wind azimuth at cell centre
             let azimuth = ang + this.signHemisphere * this.alpha;  // was minus this.sign..etc
-            let beta    = azimuth - this.cycloneAzimuthRad;
+            let beta    = azimuth - this.cycloneAzimuth;
 
             // final speed in moving cyclone with inflow at cell centre Note that the asymmetric part does not decay
             // with distance. Unless some limit is imposed the asymmetric part will generate meaningless wind
@@ -403,8 +413,8 @@ class HurrModel {
 
             if (vel >= this.ATT) {
                 vel += this.ATT * Math.cos(this.carto.azimuthToRadians(beta));          // - HALF_PI );
-                velocity.vx = vel * Math.sin(this.carto.azimuthToRadians(AziSite));     // - HALF_PI );
-                velocity.vy = vel * Math.cos(this.carto.azimuthToRadians(AziSite));     // - HALF_PI);
+                velocity.vx = vel * Math.sin(this.carto.azimuthToRadians(azimuth));     // - HALF_PI );
+                velocity.vy = vel * Math.cos(this.carto.azimuthToRadians(azimuth));     // - HALF_PI);
             }
             else {
                 velocity.vx = 0.0;
@@ -415,8 +425,13 @@ class HurrModel {
         return velocity;
     }
 
-    updateNWS23Parms( polarC ) {
-        let Rr = this.radiusToMaxWindM / polarC.dist;
+    /**
+     *
+     * @param polarC
+     * @returns {number}
+     */
+    getNWS23Velocity( polarC ) {
+        let Rr = this.radiusToMaxWind / polarC.dist;
         let eRr = Math.exp(-Rr);
         //PressDiff = this.deltPressure * (eRr - 1.0);
         let VelC2 = this.deltPressure * Rr * eRr / this.airDensity;
@@ -431,45 +446,38 @@ class HurrModel {
      * @param polarC
      * @returns {*}
      */
-    updateHollandVelocity ( polarC ) {
-
+    getHollandVelocity ( polarC ) {
         let Rkm = polarC.dist / 1000.0;											// kilometres
         let Rf2 = 0.5 * polarC.dist * Math.abs(HurrModel.CORIOLIS);						// metres/sec
         let Rb = Math.pow(Rkm, this.bHolland);									// km^B
         let earb = Math.exp(-this.aHolland / Rb);								// dimensionless
-        let pressDiff = this.deltPressurePa * earb;									// Pascals
+        let pressDiff = this.deltPressure * earb;									// Pascals
         let vel = pressDiff * this.aHolland * this.bHolland / Rb;			// Pascals
 
-        return Math.sqrt(Vel / this.airDensity + Rf2 * Rf2) - Rf2;		// m/s
+        return Math.sqrt(vel / this.airDensity + Rf2 * Rf2) - Rf2;		// m/s
     }
 
     /**
      * This accumulates the data from the detailed time-step calcualtions across the nodal grid
      */
     accumulateData () {
-
         // first, find the closest meridian to the hurricane's center
         let meridianX = Math.round((180.0 + this.eyeX) / this.gridStep);
         let parallelY = Math.round((90.0 + this.eyeY) / this.gridStep);
         let stepKM = this.carto.degToMeters(this.gridStep) / 1000.0;
         let maxRangeX = Math.round(this.radiusStormInfluence / stepKM);
 
-        // clear all the old windfields
-        for ( let k = 0; k < Math.round(360.0 / this.gridStep); k++ ) {
-            for ( let n=0; n<Math.round(180.0 / this.gridStep); n++ ) {
-                let met = this.metData[k][n];
-                met.xVel = 0;
-                met.yVel = 0;
-                met.velocity = 0;
-            }
-        }
+        this.clearWindfields();
 
         // now oscillate back and forth in longitude and accumulate the detailed time step data into the nodal grid
-
         let index = 0;
         let eyeMerc = this.carto.latlonToMerc(this.eyeX, this.eyeY);
 
-        // find the lat/lon of the closest node on the half-degre
+        // find the lat/lon of the closest node on the half-degree grid.
+        let closeLon = Math.round(this.eyeX / this.gridStep) * this.gridStep;
+        let closeLat = Math.round(this.eyeY / this.gridStep) * this.gridStep;
+
+        // find the lat/lon of the closest node on the half-degree grid
         do {
 
             // now find the upper and lower bounds that need to be updated
@@ -500,8 +508,8 @@ class HurrModel {
                     let xSamp = 0.0;
                     let ySamp = 0.0;
                     for (let j = 0; j < nClose; j++) {
-                        xSamp = xCenter + this.samplePos[aPos[j]][rPos[j]][0];
-                        ySamp = yCenter + this.samplePos[aPos[j]][rPos[j]][1];
+                        xSamp = eyeMerc.x + this.samplePos[aPos[j]][rPos[j]].x;
+                        ySamp = eyeMerc.y + this.samplePos[aPos[j]][rPos[j]].y;
 
                         // now perform a simple moving average accumulation
                         let weight = Math.hypot(xSamp - nodeMerc.x, ySamp - nodeMerc.y );
@@ -537,12 +545,25 @@ class HurrModel {
     }
 
     /**
+     *  Just clear all the deta in the metData array
+     */
+    clearWindfields() {
+        for ( let k = 0; k < Math.round(360.0 / this.gridStep); k++ ) {
+            for ( let n=0; n<Math.round(180.0 / this.gridStep); n++ ) {
+                let met = this.metData[k][n];
+                met.xVel = 0;
+                met.yVel = 0;
+                met.velocity = 0;
+            }
+        }
+    }
+    /**
      *  Find the four closest points in the samplePos array to the specified point
      *
      * @param x             coordinates of the current point
      * @param y
-     * @param rPos          X-indicies of the four closest points
-     * @param aPos          Y-indicies of the four closest points
+     * @param rPos          X-indices of the four closest points
+     * @param aPos          Y-indices of the four closest points
      * @returns             number of the closest points
      */
     findClosest  (x, y, rPos, aPos) {

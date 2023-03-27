@@ -92,10 +92,8 @@
      * Load all the storms in the specified file, parsing them into JSON
      */
     function loadStorms() {
-
         stormFile = new StormFile();
         stormFile.loadData( "data/hurdat2-1851-2016-041117.json", stormsLoaded );
-
     }
 
     /**
@@ -111,11 +109,11 @@
 
         hurrPlot.plotStormTrack( curStorm );
 
-        hurrModel.initArrays();
-        hurrModel.initialise( curStorm );
+        hurrModel.initArrays()
 
-        hurrModel.stormObsArray = stormFile.createStormObs( curStorm );
+       // hurrModel.stormObsArray = stormFile.createStormObs( curStorm );
 
+        hurrModel.initialise( stormFile, 0 );
     }
 
     /**
