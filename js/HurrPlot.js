@@ -19,7 +19,7 @@ class HurrPlot  {
     static GLOBE_DIAM = 2.0;
     static GEOM_SEGMENTS = 32;
     static GLOBE_SEGMENTS = 32;
-    static MAX_RENDER_TIME = 2.0;
+    static MAX_RENDER_TIME = 67.0;
 
     static TIPY        = 0.75;	// position in Y of arrow-head tip
     static TIPX        = 0.0;	// position in X of arrow-head tip
@@ -372,14 +372,24 @@ class HurrPlot  {
      * and scale of the arrows
      */
     renderHurricane ( eyeX, eyeY, metData, dataRect ) {
+        // console.log("eyeX,Y: " + eyeX + "," + eyeY + " dataRect: x,y0: " + dataRect.x0 + "," + dataRect.y0 + " x,y1: " + dataRect.x1 + "," + dataRect.y1 );
 
         for ( let j = dataRect.x0; j < dataRect.x1; j++ ) {
             for ( let i = dataRect.y0; i<dataRect.y1; i++ ) {
                 let met = metData[j][i];
-                let mesh = met.mesh;
-
-
+                //let mesh = met.mesh;
             }
         }
+
+        let mat = new THREE.MeshLambertMaterial({  color: 0xffffff, flatShading: true });
+
+        let xyz = this.carto.latLonToXYZ(eyeY, eyeX, 2.0);
+        let ball = new THREE.SphereGeometry(0.01, 8, 8);
+
+        let mesh = new THREE.Mesh(ball, mat);
+        mesh.position.set(xyz.x, xyz.y, xyz.z);
+        let plot = window.plotObj;
+        plot.earth.add(mesh);
+
     }
 }

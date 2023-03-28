@@ -232,17 +232,19 @@ class HurrModel {
      * @returns {number}
      */
     timeStep () {
-        let newTime = performance.now();
+        let newTime = performance.now() / 1000.0;
 
+        console.log(" newTime: " + newTime.toFixed(2) + " currentTime: " + this.currentTime.toFixed(2));
         if (this.currentTime === 0)
             this.currentTime = newTime;
 
-        let deltaTime = Math.min(newTime - this.currentTime, HurrPlot.MAX_RENDER_TIME);
+        let deltaTime = Math.min(newTime - this.currentTime, this.dt);
         this.currentTime = newTime;
 
         this.accumulator += deltaTime;
 
-        //console.log("Accum:" + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) );
+       //console.log("Accum:" + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) +
+       //     " deltaT: " + deltaTime.toFixed(2) + " curT: " + this.currentTime.toFixed(2)  );
 
         let n = 0;
         while (this.accumulator >= this.dt) {
@@ -257,7 +259,7 @@ class HurrModel {
 
         //let alpha = this.accumulator / this.dt;
 
-        //console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
+       // console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
         this.renderFunc( this.eyeX, this.eyeY, this.metData, this.dataRect );
 
@@ -297,7 +299,6 @@ class HurrModel {
                 this.sampleData[i][j].yVel = velocity.y;
 
                 this.sampleData[i][j].velocity = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-
             }
         }
 
