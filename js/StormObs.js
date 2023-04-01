@@ -1,5 +1,5 @@
-/*
- * Storm data for a single obsevation for the hurricane modelling
+/*r
+ * Storm data for a single observation for the hurricane modelling
  *
  * These are the time-node state parameters that are derived from the raw storm file.
  * They are effectively the inputs for each time step.
@@ -32,17 +32,20 @@ class Storm {
 			stormObs.velocity = -1;  	// compute!
 			stormObs.heading = -1;      // compute!
 			stormObs.windspeed = entry[StormFile.MAXWIND];
+			stormObs.maxWind = entry[StormFile.MAXWIND];
+			stormObs.minPress = entry[StormFile.MINPRESS];
 			stormObs.hour = entry[StormFile.TIME] / 100;    // NASA formats the time as 0,600,1200,1800
 			stormObs.day = entry[StormFile.DAY];
 			stormObs.month = entry[StormFile.MONTH];
 			stormObs.year = entry[StormFile.YEAR];
 			stormObs.julianDay = julian.getJulian( entry[StormFile.DAY], entry[StormFile.MONTH],
-											entry[StormFile.YEAR],);;
+											entry[StormFile.YEAR],);
 
 			this.obs.push( stormObs );
 		}
 	}
 }
+
 class StormObs {
 	// constants
 	static REVISION = "1.1.0";

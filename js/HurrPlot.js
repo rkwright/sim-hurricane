@@ -42,7 +42,9 @@ class HurrPlot  {
     static ROTATION_RATE = 0.002;
 
     //--- Class Methods ---
-    constructor () {
+    constructor ( hurrModel ) {
+
+        this.hurrModel = hurrModel;
 
         // allocate the Scene object, request orbitControls, some of 3D axes 10 units high and the stats
         this.gfxScene = new GFX.Scene( {
@@ -56,7 +58,8 @@ class HurrPlot  {
         this.createSaffirMat();
 
         this.earth = new THREE.Group();
-        this.earthGlobe = new THREE.SphereGeometry(HurrPlot.GLOBE_DIAM,HurrPlot.GLOBE_SEGMENTS,HurrPlot.GLOBE_SEGMENTS);
+        this.earthGlobe = new THREE.SphereGeometry(HurrPlot.GLOBE_DIAM,
+                                                   HurrPlot.GLOBE_SEGMENTS, HurrPlot.GLOBE_SEGMENTS);
         this.rotationRate =  0.0;
 
         this.carto = new Carto();
@@ -117,7 +120,10 @@ class HurrPlot  {
         requestAnimationFrame(this.animateScene);
 
         // tell the hurricane model to update itself and call back to render when it can
-        hurrModel.timeStep();
+        if (hurrModel.step) {
+            hurrModel.timeStep();
+            hurrModel.setModelStep( false );
+        }
 
         window.plotObj.earth.rotation.y += this.rotationRate;
 
@@ -204,7 +210,8 @@ class HurrPlot  {
             }
 
             let curve = new THREE.CatmullRomCurve3(track);
-            let geometry = new THREE.TubeGeometry(curve, track.length, HurrPlot.TRACK_DIA, HurrPlot.GEOM_SEGMENTS, false);
+            let geometry = new THREE.TubeGeometry(curve, track.length,
+                                          HurrPlot.TRACK_DIA, HurrPlot.GEOM_SEGMENTS, false);
 
             let trackMesh = new THREE.Mesh(geometry, mat);
             trackGroup.add(trackMesh);
@@ -296,25 +303,25 @@ class HurrPlot  {
 
         // the head of the arrow
         this.triangleFace( vC, vB, vA, arrowVerts, arrowNorms, counter );
-        this.triangleFace( vB, vC, vF, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vB, vF, vE, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vC, vA, vD, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vC, vD, vF, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vA, vB, vD, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vB, vE, vD, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vE, vF, vD, arrowVerts, arrowNorms, counter );         //don't need the bottom of the arrow!
+        this.triangleFace( vB, vC, vF, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vB, vF, vE, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vC, vA, vD, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vC, vD, vF, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vA, vB, vD, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vB, vE, vD, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vE, vF, vD, arrowVerts, arrowNorms, counter );
 
         // the tail, i.e. the box part of the arrow
-        this.triangleFace( vG, vI, vJ, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vG, vJ, vH, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vH, vJ, vN, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vH, vN, vL, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vI, vG, vM, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vM, vG, vK, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vJ, vI, vM, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vJ, vM, vN, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vL, vN, vM, arrowVerts, arrowNorms, counter  );
-        this.triangleFace( vM, vK, vL, arrowVerts, arrowNorms, counter  );
+        this.triangleFace( vG, vI, vJ, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vG, vJ, vH, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vH, vJ, vN, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vH, vN, vL, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vI, vG, vM, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vM, vG, vK, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vJ, vI, vM, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vJ, vM, vN, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vL, vN, vM, arrowVerts, arrowNorms, counter );
+        this.triangleFace( vM, vK, vL, arrowVerts, arrowNorms, counter );
 
         const arrowGeometry = new THREE.BufferGeometry();
         arrowGeometry.addAttribute('position', new THREE.BufferAttribute(arrowVerts, 3));
@@ -381,15 +388,14 @@ class HurrPlot  {
             }
         }
 
-        let mat = new THREE.MeshLambertMaterial({  color: 0xffffff, flatShading: true });
+        if (this.ballMesh === undefined) {
+            let mat = new THREE.MeshLambertMaterial({  color: 0xff0000, flatShading: true });
+            let ball = new THREE.SphereGeometry(0.02, 8, 8);
+            this.ballMesh = new THREE.Mesh(ball, mat);
+            window.plotObj.earth.add(this.ballMesh);
+        }
 
         let xyz = this.carto.latLonToXYZ(eyeY, eyeX, 2.0);
-        let ball = new THREE.SphereGeometry(0.01, 8, 8);
-
-        let mesh = new THREE.Mesh(ball, mat);
-        mesh.position.set(xyz.x, xyz.y, xyz.z);
-        let plot = window.plotObj;
-        plot.earth.add(mesh);
-
+        this.ballMesh.position.set(xyz.x, xyz.y, xyz.z);
     }
 }

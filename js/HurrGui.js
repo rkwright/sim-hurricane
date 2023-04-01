@@ -33,7 +33,7 @@ class HurrGui  {
         this.setupGui();
 
         this.updateYears();
-        this.updateStorms(this.curStorm.entries[0][StormFile.YEAR]);
+        this.updateStorms(this.curStorm.obs[0].year);
         this.updateEntries(this.storms[0]);
     }
 
@@ -95,7 +95,8 @@ class HurrGui  {
         this.stormLabels = this.getStormLabels(this.storms);
         this.stormOptions.stormLabels = this.stormLabels[0];
 
-        this.stormsGui = this.hurrGui.add(this.stormOptions, "stormLabels", this.stormLabels).name("Storms").onChange(this.stormsChange);
+        this.stormsGui = this.hurrGui.add(this.stormOptions, "stormLabels",
+                             this.stormLabels).name("Storms").onChange(this.stormsChange);
     }
 
     /**
@@ -128,7 +129,8 @@ class HurrGui  {
         this.entryLabels = this.getEntryLabels(storm);
         this.stormOptions.entryLabels = this.entryLabels[0];
 
-        this.entriesGui = this.hurrGui.add(this.stormOptions, "entryLabels", this.entryLabels).name("Entries").onChange(this.entriesChange);
+        this.entriesGui = this.hurrGui.add(this.stormOptions, "entryLabels",
+                              this.entryLabels).name("obs").onChange(this.entriesChange);
     }
 
     /**
@@ -153,10 +155,10 @@ class HurrGui  {
 
         for ( let index in storms ) {
             storm = storms[index];
-            let entry = storm.entries[0];
-            let start = mois[entry[1]] + " " + entry[2];
+            let obs = storm.obs[0];
+            let start = mois[obs.month] + " " + obs.day;
             if (storm) {
-                let label = storm.atcID + " : " + storm.name + " : " + start;
+                let label = storm.id + " : " + storm.name + " : " + start;
                 results.push(label);
             }
         }
@@ -171,14 +173,14 @@ class HurrGui  {
      */
     getEntryLabels ( storm ) {
         let results = [];
-        let entry;
         let label;
 
-        for ( let index in storm.entries ) {
-            entry = storm.entries[index];
-            if (entry) {
-                label = entry[2] + " " + this.pad("0000", entry[3], true).substring(0, 2) + "h " + entry[6].toFixed(1) + " " +
-                    entry[7].toFixed(1) + " " + entry[8].toFixed(0) + " " + entry[9].toFixed(0);
+        for ( let index in storm.obs ) {
+            let obs = storm.obs[index];
+            if (obs) {
+                label = obs.day + " " + this.pad("0000", obs.hour, true).substring(0, 2) + "h " +
+                      obs.lat.toFixed(1) + " " + obs.lon.toFixed(1) + " " +
+                    obs.maxWind.toFixed(0) + " " + obs.minPress.toFixed(0);
 
                 results.push(label);
             }

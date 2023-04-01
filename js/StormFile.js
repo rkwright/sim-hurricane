@@ -209,11 +209,11 @@ class StormFile {
         let storm;
         let lastYear = undefined;
 
-        for ( let index in this.jsonData.storms ) {
-            storm = this.jsonData.storms[index];
-            if (storm && storm.entries[0][0] !== lastYear) {
-                results.push(storm.entries[0][0]);
-                lastYear = storm.entries[0][0];
+        for ( let index in this.storms ) {
+            storm = this.storms[index];
+            if (storm && storm.obs[0].year !== lastYear) {
+                results.push(storm.obs[0].year);
+                lastYear = storm.obs[0].year;
             }
         }
 
@@ -229,9 +229,9 @@ class StormFile {
         let results = [];
         let storm;
 
-        for ( let index in this.jsonData.storms ) {
-            storm = this.jsonData.storms[index];
-            if (storm && storm.entries[0][0] === year) {
+        for ( let index in this.storms ) {
+            storm = this.storms[index];
+            if (storm && storm.obs[0].year === year) {
                 results.push(storm);
             }
         }

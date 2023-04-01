@@ -57,9 +57,9 @@
         <input type="checkbox" id="showTrack"  onclick="showTrack()">
     </label>
     &nbsp;
-    <button class="btn" onclick="stopVCR()">Stop</button>
-    <button class="btn" onclick="playVCR()">Play</button>
-    <button class="btn" onclick="pauseVCR()">Pause</button>
+    <button class="btn" onclick="stopModel()">Stop</button>
+    <button class="btn" onclick="runModel()">Run</button>
+    <button class="btn" onclick="pauseModel()">Pause</button>
 </div>
 
 <script>
@@ -76,14 +76,14 @@
      */
     function initializeDemo() {
 
-        this.hurrPlot = new HurrPlot();
+        // now create the model.  It doesn't have any parameters or data - it's
+        // just the executable model itself
+        this.hurrModel = new HurrModel();
+        this.hurrPlot = new HurrPlot( this.hurrModel);
+        this.hurrModel.setRenderFunc( hurrPlot.renderHurricane );
 
         // Create the mesh onto which we will render the output of the hurricane model
         this.hurrPlot.createGlobe();
-
-        // now create the model.  It doesn't have any parameters or data - it's
-        // just the executable model itself
-        this.hurrModel = new HurrModel( hurrPlot.renderHurricane );
 
         loadStorms();
     }
@@ -101,19 +101,10 @@
      */
     function stormsLoaded() {
         hurrGui = new HurrGui( hurrPlot.gfxScene.gui, stormFile, hurrPlot.plotStormTrack, runStorm);
-
         hurrGui.setupDatGui();
-
         let curStorm = hurrGui.getCurrentStorm();
-        console.log("current storm: " + curStorm);
 
-        hurrPlot.plotStormTrack( curStorm );
-
-        hurrModel.initArrays()
-
-       // hurrModel.stormObsArray = stormFile.createStormObs( curStorm );
-
-        hurrModel.initialise( stormFile, 0 );
+        hurrModel.initStorm( curStorm );
     }
 
     /**
@@ -136,15 +127,16 @@
         console.log("Show Track is " + ((checkbox.checked === true) ? "" : " not ") + "checked");
     }
 
-    function stopVCR() {
+    function stopModel() {
         console.log("Stop!");
     }
 
-    function playVCR() {
-        console.log("Play!");
+    function runModel() {
+        console.log("Run!!");
+        hurrModel.setModelStep( true );
     }
 
-    function pauseVCR() {
+    function pauseModel() {
         console.log("Pause?");
     }
 
