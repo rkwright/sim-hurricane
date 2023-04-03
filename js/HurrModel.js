@@ -203,16 +203,25 @@ class HurrModel {
         this.renderFunc = rendFunc;
     }
 
+    /**
+     * Stop the model running by closing the flag and killing the timer.
+     */
     stopModel () {
         this.modelStep = false;
         clearTimeout( this.stepTimer );
     }
 
+    /**
+     * RUn the model by starting the timer which allows periodic updates.
+     */
     runModel () {
         this.stepTimer = setTimeout( this.handleTimer, 100);
     }
 
-    handleTimer () {
+    /**
+     * Handler for the timer events. Note arrow function so we get the model'a this
+     */
+    handleTimer  = () => {
         this.modelStep = true;
         this.stepTimer = setTimeout( this.handleTimer, 100);
     }
