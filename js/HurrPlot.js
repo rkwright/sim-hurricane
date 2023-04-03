@@ -171,7 +171,7 @@ class HurrPlot  {
         let plot = window.plotObj;
         let gcGen = new GreatCircle();
         let points;
-        let startLL = {lat: curStorm.entries[0][StormFile.LAT], lon: curStorm.entries[0][StormFile.LON]};
+        let startLL = {lat: curStorm.obs[0].lat, lon: curStorm.obs[0].lon };
         let endLL = {};
         let xyz;
 
@@ -180,7 +180,7 @@ class HurrPlot  {
 
         plot.removeOldTrack( plot );
 
-        let saffirCat = plot.getSaffirCat(curStorm.entries[0][StormFile.MAXWIND]);
+        let saffirCat = plot.getSaffirCat(curStorm.obs[0].maxWind);
         let mat = plot.saffirMat[saffirCat];
         let mesh = plot.roundJoin(startLL.lat, startLL.lon, mat);
         trackGroup.add( mesh);
@@ -188,10 +188,10 @@ class HurrPlot  {
         //console.log("***** Storm: " + curStorm.atcID + "  " + curStorm.name + " *****");
         //console.log(" LL: " + startLL.lat + ", " + startLL.lon);
 
-        for ( let i = 1; i < curStorm.entries.length; i++) {
-            endLL = {lat: curStorm.entries[i][StormFile.LAT], lon: curStorm.entries[i][StormFile.LON]};
+        for ( let i = 1; i < curStorm.obs.length; i++) {
+            endLL = {lat: curStorm.obs[i].lat, lon: curStorm.obs[i].lon};
 
-            saffirCat = plot.getSaffirCat(curStorm.entries[i][StormFile.MAXWIND]);
+            saffirCat = plot.getSaffirCat(curStorm.obs[i].maxWind);
             mat = plot.saffirMat[saffirCat];
 
             mesh = plot.roundJoin(endLL.lat, endLL.lon, mat);

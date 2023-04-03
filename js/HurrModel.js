@@ -62,12 +62,13 @@ class HurrModel {
 
         this.modelType = HurrModel.enModelType[0];
 
-         this.dTimeStep = 0;
+        this.dTimeStep = 0;
         this.dt = HurrModel.TIME_STEP;
         this.t = 0.0;
         this.currentTime = 0.0
         this.accumulator = 0.0
         this.modelStep = false;
+        this.showTrack = true;
     }
 
     /**

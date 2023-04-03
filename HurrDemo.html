@@ -126,7 +126,8 @@
      * Handle the checkbox for "show the track"
      */
     function showTrack() {
-        let checkbox = document.getElementById('showTrack');
+        let rotate = document.getElementById('showTrack');
+        hurrModel.showTrack = rotate.checked === true;
      }
 
     /**
