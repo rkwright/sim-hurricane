@@ -14,11 +14,10 @@ class HurrGui  {
     static REVISION = '1.1.0';
 
     // Constructor
-    constructor( gui, stormFile, updateCallback, runCallback ) {
+    constructor( gui, stormFile, stormChanged ) {
         this.gui = gui;
         this.stormFile = stormFile;
-        this.updateCallback = updateCallback;
-        this.runCallback = runCallback;
+        this.stormChanged = stormChanged;
 
         this.stormOptions = {};
 
@@ -108,7 +107,7 @@ class HurrGui  {
         gThis.curStorm = gThis.storms[index];
         gThis.updateEntries( gThis.curStorm );
 
-        gThis.updateCallback( gThis.curStorm );
+        gThis.stormChanged( gThis.curStorm );
     }
 
     /**

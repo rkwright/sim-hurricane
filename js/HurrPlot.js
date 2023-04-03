@@ -120,9 +120,9 @@ class HurrPlot  {
         requestAnimationFrame(this.animateScene);
 
         // tell the hurricane model to update itself and call back to render when it can
-        if (hurrModel.step) {
+        if (hurrModel.step || true) {
             hurrModel.timeStep();
-            hurrModel.setModelStep( false );
+            hurrModel.modelStep = false;
         }
 
         window.plotObj.earth.rotation.y += this.rotationRate;

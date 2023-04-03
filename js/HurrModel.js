@@ -195,19 +195,25 @@ class HurrModel {
     }
 
     /**
-     * Turn on or off the flag the allows the model to execute a step
-     * @param step
-     */
-    setModelStep ( step ) {
-        this.modelStep = step;
-    }
-
-    /**
      * Set the function to be called when storm rendering is needed
      * @param rendFunc
      */
     setRenderFunc ( rendFunc ) {
         this.renderFunc = rendFunc;
+    }
+
+    stopModel () {
+        this.modelStep = false;
+        clearTimeout( this.stepTimer );
+    }
+
+    runModel () {
+        this.stepTimer = setTimeout( this.handleTimer, 100);
+    }
+
+    handleTimer () {
+        this.modelStep = true;
+        this.stepTimer = setTimeout( this.handleTimer, 100);
     }
 
     /**
@@ -232,15 +238,12 @@ class HurrModel {
 
         while (this.accumulator >= this.dt) {
             this.accumulator -= this.dt;
-
             this.update( this.dt / 1000 );
-
             this.t += this.dt;
         }
 
-        //let alpha = this.accumulator / this.dt;
-
-       // console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
+        // let alpha = this.accumulator / this.dt;
+        // console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
         this.renderFunc( this.eyeX, this.eyeY, this.metData, this.dataRect );
 
@@ -469,7 +472,7 @@ class HurrModel {
             // now find the upper and lower bounds that need to be updated
             //let angle = Math.atan((index * stepKM) / this.radiusStormInfluence);
             //let nRangeY = Math.round(Math.abs(Math.cos(angle)) * this.radiusStormInfluence / stepKM);
-           let nRangeY = HurrModel.DIMY;
+            let nRangeY = HurrModel.DIMY;
             let rPos = [];
             let aPos = [];
 
@@ -570,7 +573,7 @@ class HurrModel {
         while (x >= this.sampleDist[n] && n < this.nRadialSamples) n++;
 
         // check for out of range.  This shouldn't occur normally, but...
-        if (n >= this.nRadialSamples)
+        if (n >= this.nRadialSamples || n === 0)
             return 0;
 
         // check for the special case where we are in the eye...

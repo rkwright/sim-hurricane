@@ -60,6 +60,7 @@
     <button class="btn" onclick="stopModel()">Stop</button>
     <button class="btn" onclick="runModel()">Run</button>
     <button class="btn" onclick="pauseModel()">Pause</button>
+    <button class="btn" onclick="stepModel()">Step</button>
 </div>
 
 <script>
@@ -76,10 +77,8 @@
      */
     function initializeDemo() {
 
-        // now create the model.  It doesn't have any parameters or data - it's
-        // just the executable model itself
         this.hurrModel = new HurrModel();
-        this.hurrPlot = new HurrPlot( this.hurrModel);
+        this.hurrPlot  = new HurrPlot( this.hurrModel );
         this.hurrModel.setRenderFunc( hurrPlot.renderHurricane );
 
         // Create the mesh onto which we will render the output of the hurricane model
@@ -100,46 +99,50 @@
      * Call back from loadStorms:HTTPRequest when data has been loaded
      */
     function stormsLoaded() {
-        hurrGui = new HurrGui( hurrPlot.gfxScene.gui, stormFile, hurrPlot.plotStormTrack, runStorm);
+        hurrGui = new HurrGui( hurrPlot.gfxScene.gui, stormFile, stormChanged );
         hurrGui.setupDatGui();
-        let curStorm = hurrGui.getCurrentStorm();
-
-        hurrModel.initStorm( curStorm );
+        stormChanged();
     }
 
     /**
-     *  Initialize the current model run and kick it off
+     * Called when the current storm is chnaged in the UI or during init.
      */
-    function runStorm( storm ) {
-
-        // Start the animation
-        //animateScene();
+    function stormChanged() {
+        let curStorm = hurrGui.getCurrentStorm();
+        hurrModel.initStorm( curStorm );
+        if (hurrModel.showTrack)
+            hurrPlot.plotStormTrack( curStorm );
     }
 
+    /**
+     *  Sets the rotation rate ON/OFF by callng on the model.
+     */
     function rotationRate() {
         let rotate = document.getElementById('rotationRate');
-        console.log("RotateRate is " + ((rotate.checked === true) ? "" : " not ") + "checked");
-        hurrPlot.setRotation( rotate.checked === true );
+         hurrPlot.setRotation( rotate.checked === true );
     }
 
+    /**
+     * Handle the checkbox for "show the track"
+     */
     function showTrack() {
         let checkbox = document.getElementById('showTrack');
-        console.log("Show Track is " + ((checkbox.checked === true) ? "" : " not ") + "checked");
-    }
+     }
 
+    /**
+     * Handle the "Stop" model command.
+     */
     function stopModel() {
-        console.log("Stop!");
+        hurrModel.stopModel();
     }
 
     function runModel() {
-        console.log("Run!!");
-        hurrModel.setModelStep( true );
+        hurrModel.startStepper();
     }
 
-    function pauseModel() {
-        console.log("Pause?");
+    function stepModel() {
+        hurrModel.singleStep();
     }
-
 </script>
 
 </body>
