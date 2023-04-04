@@ -78,7 +78,7 @@ class HurrPlot  {
 
     createGlobeMat ( callBack, pThis ) {
         let textureLoader = new THREE.TextureLoader();
-        let material = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: false, opacity: 0.75});
+        let material = new THREE.MeshPhongMaterial({color: '#ffffff', transparent: true, opacity: 0.5});
         textureLoader.load("images/8081-earthmap8k.jpg", function (texture) {
             material.map = texture;
             material.needsUpdate = true;
@@ -100,6 +100,9 @@ class HurrPlot  {
         window.plotObj.earthMesh = new THREE.Mesh (pThis.earthGlobe, material );
         pThis.earth.add( window.plotObj.earthMesh );
         pThis.gfxScene.add( pThis.earth );
+
+        pThis.createArrows();
+
         pThis.animateScene();
     }
 
@@ -372,6 +375,26 @@ class HurrPlot  {
         counter.n = n;
     }
 
+    /**
+     * Create the set of arrows to represent the windfields.
+     *
+     * @param arrowMesh
+     */
+     createArrows() {
+
+        this.arrowGroup = new THREE.Group();
+
+        this.arrows = [];
+        for ( let  k=0; k<Math.round(360.0 / hurrModel.gridStep); k++ ) {
+            this.arrows.push( [] );
+            for ( let n=0; n<Math.round(180.0 / hurrModel.gridStep); n++ ) {
+                this.arrows[k][n] = this.arrowMesh.clone();
+                this.arrowGroup.add(this.arrows[k][n]);
+            }
+
+            this.gfxScene.add( this.arrowGroup );
+        }
+    }
     /**
      * Called by the hurricane model to have the sample data rendered
      * In this case, the wind arrows and eye are already in existence

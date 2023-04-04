@@ -26,7 +26,7 @@ class HurrModel {
     static AIR_DENSITY =                 1.225;
 
     static TIME_STEP = 0.01;
-    static TIME_OUT  = 50.0;   // ms
+    static TIME_OUT  = 10.0;   // ms
 
     static DIMX = 10;
     static DIMY = 10;
