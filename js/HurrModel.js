@@ -26,6 +26,7 @@ class HurrModel {
     static AIR_DENSITY =                 1.225;
 
     static TIME_STEP = 0.01;
+    static TIME_OUT  = 50.0;   // ms
 
     static DIMX = 10;
     static DIMY = 10;
@@ -212,10 +213,10 @@ class HurrModel {
     }
 
     /**
-     * RUn the model by starting the timer which allows periodic updates.
+     * Run the model by starting the timer which allows periodic updates.
      */
     runModel () {
-        this.stepTimer = setTimeout( this.handleTimer, 100);
+        this.stepTimer = setTimeout( this.handleTimer, HurrModel.TIME_OUT);
     }
 
     /**
@@ -223,7 +224,7 @@ class HurrModel {
      */
     handleTimer  = () => {
         this.modelStep = true;
-        this.stepTimer = setTimeout( this.handleTimer, 100);
+        this.stepTimer = setTimeout( this.handleTimer, HurrModel.TIME_OUT);
     }
 
     /**
@@ -238,7 +239,7 @@ class HurrModel {
         if (this.currentTime === 0)
             this.currentTime = newTime;
 
-        let deltaTime = Math.min(newTime - this.currentTime, this.dt);
+        let deltaTime = Math.min(newTime - this.currentTime, this.dt ); //HurrPlot.MAX_RENDER_TIME);
         this.currentTime = newTime;
 
         this.accumulator += deltaTime;
@@ -255,6 +256,7 @@ class HurrModel {
         // let alpha = this.accumulator / this.dt;
         // console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
+        console.log("Rendering... ");
         this.renderFunc( this.eyeX, this.eyeY, this.metData, this.dataRect );
 
         return 0;

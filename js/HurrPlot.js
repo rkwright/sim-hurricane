@@ -19,7 +19,7 @@ class HurrPlot  {
     static GLOBE_DIAM = 2.0;
     static GEOM_SEGMENTS = 32;
     static GLOBE_SEGMENTS = 32;
-    static MAX_RENDER_TIME = 67.0;
+    static MAX_RENDER_TIME = 0.5;
 
     static TIPY        = 0.75;	// position in Y of arrow-head tip
     static TIPX        = 0.0;	// position in X of arrow-head tip
@@ -120,7 +120,7 @@ class HurrPlot  {
         requestAnimationFrame(this.animateScene);
 
         // tell the hurricane model to update itself and call back to render when it can
-        if (hurrModel.step || true) {
+        if ( hurrModel.modelStep === true ) {
             hurrModel.timeStep();
             hurrModel.modelStep = false;
         }
@@ -132,7 +132,7 @@ class HurrPlot  {
     }
 
     /**
-     *
+     * Create the set of Saffir-colored materials
      */
     createSaffirMat () {
         for ( let i in HurrPlot.SAFFIR ) {
