@@ -337,6 +337,10 @@ class HurrPlot  {
         const material = new THREE.MeshLambertMaterial({  color: 0xffffff, flatShading: true });
         let arrowMesh = new THREE.Mesh(arrowGeometry, material);
         arrowMesh.rotateX(Math.HALF_PI);
+        let scale3D = { x: 0.01, y: 0.01, z:0.01 }
+        arrowMesh.scale.x = scale3D.x;
+        arrowMesh.scale.y = scale3D.y;
+        arrowMesh.scale.z = scale3D.z;
 
         return arrowMesh;
     }
@@ -385,9 +389,9 @@ class HurrPlot  {
         this.arrowGroup = new THREE.Group();
 
         this.arrows = [];
-        for ( let  k=0; k<Math.round(360.0 / hurrModel.gridStep); k++ ) {
+        for ( let  k=0; k<HurrModel.DIMX * 2; k++ ) {
             this.arrows.push( [] );
-            for ( let n=0; n<Math.round(180.0 / hurrModel.gridStep); n++ ) {
+            for ( let n=0; n<HurrModel.DIMY * 2; n++ ) {
                 this.arrows[k][n] = this.arrowMesh.clone();
                 this.arrowGroup.add(this.arrows[k][n]);
             }
@@ -401,13 +405,22 @@ class HurrPlot  {
      * so we just update the location of the eye and set the direction
      * and scale of the arrows
      */
-    renderHurricane ( eyeX, eyeY, metData, dataRect ) {
+    renderHurricane ( eyeX, eyeY, metData, dataRect, arrows ) {
         // console.log("eyeX,Y: " + eyeX + "," + eyeY + " dataRect: x,y0: " + dataRect.x0 + "," + dataRect.y0 + " x,y1: " + dataRect.x1 + "," + dataRect.y1 );
 
+        if ( dataRect.x1 === 0 && dataRect.y1 === 0)
+            return;
+
+
+        let arrow;
+        let met;
         for ( let j = dataRect.x0; j < dataRect.x1; j++ ) {
             for ( let i = dataRect.y0; i<dataRect.y1; i++ ) {
-                let met = metData[j][i];
-                //let mesh = met.mesh;
+                met = metData[j][i];
+
+                let xyz = this.carto.latLonToXYZ(met.lat, met.lon, HurrPlot.GLOBE_DIAM);
+                arrow = arrows[j - dataRect.x0][i - dataRect.y0];
+                arrow.position.set(xyz.x, xyz.y, xyz.z);
             }
         }
 

@@ -26,7 +26,7 @@ class HurrModel {
     static AIR_DENSITY =                 1.225;
 
     static TIME_STEP = 0.01;
-    static TIME_OUT  = 10.0;   // ms
+    static TIME_OUT  = 100.0;   // ms
 
     static DIMX = 10;
     static DIMY = 10;
@@ -39,13 +39,11 @@ class HurrModel {
      */
     constructor () {
         this.metData = undefined;
-        this.dataRect = { x0: 0, y0: 0, x1: 1, y1: 1 };
+        this.dataRect = { x0: 0, y0: 0, x1: 0, y1: 0 };
         this.gridStep = 0.5;				// in degrees
 
         this.nRadialSamples = 12;				// number of steps outward (radial) to be sampled
         this.nAngularSamples = 15;				// number of angular samples
-
-        this.initArrays();
 
         this.initialPosX = 0;				// initial coords of center
         this.initialPosY = 0;
@@ -70,6 +68,8 @@ class HurrModel {
         this.accumulator = 0.0
         this.modelStep = false;
         this.showTrack = true;
+
+        this.initArrays();
     }
 
     /**
@@ -216,6 +216,7 @@ class HurrModel {
      * Run the model by starting the timer which allows periodic updates.
      */
     runModel () {
+        this.initStorm( this.curStorm );
         this.stepTimer = setTimeout( this.handleTimer, HurrModel.TIME_OUT);
     }
 
@@ -257,7 +258,7 @@ class HurrModel {
         // console.log("Render: " + this.accumulator.toFixed(2) + " t: " + this.t.toFixed(2) + " n: " + n);
 
         console.log("Rendering... ");
-        this.renderFunc( this.eyeX, this.eyeY, this.metData, this.dataRect );
+        this.renderFunc( this.eyeX, this.eyeY, this.metData, this.dataRect, hurrPlot.arrows );
 
         return 0;
     }
@@ -498,6 +499,9 @@ class HurrModel {
 
             for ( let n = -nRangeY; n < nRangeY; n++) {
                 let met = this.metData[meridianX + index][parallelY + n];
+
+                met.lon = lon;
+                met.lat = lat;
                 let nodeMerc = this.carto.latlonToMerc(lon, lat);
 
                 // now find the four closest sampled points
@@ -543,7 +547,7 @@ class HurrModel {
             else
                 index = -index;
         }
-        while (index > -maxRangeX);
+        while (index >= -maxRangeX);
     }
 
     /**
