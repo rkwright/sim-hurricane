@@ -17,17 +17,9 @@ class HurrPlot  {
 
     static TRACK_DIA = 0.002;
     static GLOBE_DIAM = 2.0;
-    static GEOM_SEGMENTS = 32;
+    static GEOM_SEGMENTS = 8;
     static GLOBE_SEGMENTS = 32;
     static MAX_RENDER_TIME = 0.5;
-
-    static TIPY        = 0.75;	// position in Y of arrow-head tip
-    static TIPX        = 0.0;	// position in X of arrow-head tip
-    static BASE        = 0.1;	// base of arrow-head in Y
-    static HEAD_WIDTH  = 0.3;	// half-width of the arrow-head in X
-    static SHAFT_WIDTH = 0.1;	// half-width of the arrow-shaft in X
-    static SHAFT_END   = -0.5;	// end of the arrow-shaft in Y
-    static THICKNESS   = 0.5;	// half-thickness of the arrow in Z
 
     static SAFFIR =  [
         {cat: '5', minMPH: 157, color: 0xff6060},
@@ -426,7 +418,7 @@ class HurrPlot  {
 
         if (this.ballMesh === undefined) {
             let mat = new THREE.MeshLambertMaterial({  color: 0xff0000, flatShading: true });
-            let ball = new THREE.SphereGeometry(0.02, 8, 8);
+            let ball = new THREE.SphereGeometry(0.005, 8, 8);
             this.ballMesh = new THREE.Mesh(ball, mat);
             window.plotObj.earth.add(this.ballMesh);
         }

@@ -24,6 +24,7 @@ class HurrModel {
     static CORIOLIS =                    2.0e-5;	// Coriolis parameter in the tropics (1/s)
     static MIN_PRESSURE_DIFFERENCE =     0.1;
     static AIR_DENSITY =                 1.225;
+    static FILLING_RATE =                20.0;      // wag
 
     static TIME_STEP = 0.01;
     static TIME_OUT  = 100.0;   // ms
@@ -56,7 +57,7 @@ class HurrModel {
         this.peripheralPressure = 0;	    // pressure outside hurricane proper
         this.centralPressure = 0;		    // initial pressure at the eye
         this.radiusToMaxWind = 0;		    // radius from eye to max windspeed
-        this.rateOfIncrease = 0;			// rate of increase of in RMAX over land (km/hr)
+        this.rateOfIncrease = 20;			// rate of increase of in RMAX over land (km/hr)
         this.translationalSpeed = 0;	    // speed that eye is moving (m/s)
 
         this.modelType = HurrModel.enModelType[0];
@@ -166,18 +167,21 @@ class HurrModel {
         this.centralPressure = storm.obs[0].pressure * 100.0;  // pascals
         this.deltPressure = this.peripheralPressure - this.centralPressure;
 
+        // set the filling rate in pascals
+        this.fillingRate = HurrModel.FILLING_RATE / 36.0;
+
         // set limits on RMax ( in metres )
         this.rMaxMax = 200000.0;    // 200 km
         this.rMaxMin = 2000.0;      // 2 km
 
         // we need it converted to metres, but don't let it over-range
-        this.radiusToMaxWind = Math.max(this.radiusToMaxWind * 1000.0, this.rMaxMax, this.rMaxMin);
+        this.radiusToMaxWind = Math.max( this.rMaxMax, this.rMaxMin );
 
         // hardcode the inflow angle (why?)
         this.inflowAngle = Math.toRad(HurrModel.INFLOW_ANGLE);
 
         // covert rate of increase in RMAX over land to m/s
-        this.rateOfIncreaseM = this.rateOfIncrease / 3.6;
+        this.rateOfIncrease /= 3.6;
 
         // convert inflow-angle to radians
         this.alpha = -this.inflowAngle - Math.PI / 2;		// was positive alpha...
@@ -311,7 +315,7 @@ class HurrModel {
         if (this.onLand) {
             this.centralPressure = Math.min(this.centralPressure + this.fillingRate * this.dTimeStep,
                                            this.peripheralPressure );
-            this.radiusToMaxWind = this.radiusToMaxWind + this.rateOfIncreaseM * this.dTimeStep;
+            this.radiusToMaxWind = this.radiusToMaxWind + this.rateOfIncrease * this.dTimeStep;
             this.radiusToMaxWind = Math.clamp(this.radiusToMaxWind, this.rMaxMax, this.rMaxMin);
             this.deltPressure = this.peripheralPressure - this.centralPressure;
             this.bHolland = 1.5 + (980.0 - this.centralPressure / 100.0) / 120.0;
@@ -361,8 +365,9 @@ class HurrModel {
 
         this.pressure = Math.lerp( prevStormObs.pressure, stormObs.pressure, prop );
 
-        this.deltPressure = Math.lerp( prevStormObs.pressure - this.peripheralPressure,
-                                        stormObs.pressure  - this.peripheralPressure, prop );
+        let prevDelt = (prevStormObs.pressure * 100.0) - this.peripheralPressure;
+        let curDelt = (stormObs.pressure * 100.0) - this.peripheralPressure;
+        this.deltPressure = Math.lerp( prevDelt, curDelt, prop );
 
         console.log("stormTime: " + stormTime + "  curTime: " + curTime + " eyeX: " +
                         this.eyeX + " eyeY: " + this.eyeY);
@@ -385,7 +390,6 @@ class HurrModel {
         // calculate the distance from the current point to the cyclone centre
         let curX = this.eyeX + Math.cos(ang) * rDist / Carto.METERPERDEG;
         let curY = this.eyeY + Math.sin(ang) * rDist / Carto.METERPERDEG;
-        let polarC = this.carto.cartesianToPolarNorth( curX, curY, this.eyeX, this.eyeY );
 
         // impose a lower limit on the value of rdist. Set the pressure to P0 and the wind velocity to 0 inside this limit
         if ((rDist / this.radiusToMaxWind) < 0.05) {
@@ -394,9 +398,9 @@ class HurrModel {
         }
         else {
             if (this.modelType === "NWS23")
-                vel = this.getNWS23Velocity( polarC );
+                vel = this.getNWS23Velocity( rDist );
             else
-                vel = this.getHollandVelocity( polarC  );
+                vel = this.getHollandVelocity( rDist  );
 
             //	wind azimuth at cell centre
             let azimuth = ang + this.signHemisphere * this.alpha;  // was minus this.sign..etc
@@ -429,12 +433,12 @@ class HurrModel {
      * @param polarC
      * @returns {number}
      */
-    getNWS23Velocity( polarC ) {
+    getNWS23Velocity( rDist ) {
         let Rr = this.radiusToMaxWind / polarC.dist;
         let eRr = Math.exp(-Rr);
         //PressDiff = this.deltPressure * (eRr - 1.0);
         let VelC2 = this.deltPressure * Rr * eRr / this.airDensity;
-        let Rf2 = 0.5 * polarC.dist * HurrModel.CORIOLIS;
+        let Rf2 = 0.5 * rDist * HurrModel.CORIOLIS;
 
         return Rf2 * Math.sqrt(1.0 + VelC2 / (Rf2 * Rf2)) - 1.0;
     }
@@ -446,9 +450,9 @@ class HurrModel {
      * @param polarC
      * @returns {*}
      */
-    getHollandVelocity ( polarC ) {
-        let Rkm = polarC.dist / 1000.0;										// kilometres
-        let Rf2 = 0.5 * polarC.dist * Math.abs(HurrModel.CORIOLIS);			// metres/sec
+    getHollandVelocity ( rDist ) {
+        let Rkm = rDist / 1000.0;										// kilometres
+        let Rf2 = 0.5 * rDist * Math.abs(HurrModel.CORIOLIS);			// metres/sec
         let Rb = Math.pow(Rkm, this.bHolland);									// km^B
         let earb = Math.exp(-this.aHolland / Rb);							// dimensionless
         let pressDiff = this.deltPressure * earb;								// Pascals
