@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Holland Model Test</title>
+    <link rel="stylesheet" type="text/css" href="../css/gfx-scene.css" />
+    <!-- Set the viewport size to the screen size, so it will be displayed maximized, but unscaled. -->
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"/>
+
+    <script src="../gfx/math-ext.js"></script>
+    <script src="../gfx/Carto.js"></script>
+</head>
+<body>
+
+<script>
+    PERIPHERAL_PRESSURE =        1013.0;	// a standard atmosphere in mB
+    INFLOW_ANGLE =                20.0;
+    CORIOLIS =                    2.0e-5;	// Coriolis parameter in the tropics (1/s)
+    MIN_PRESSURE_DIFFERENCE =     0.1;
+    CENTRAL_PRESSURE =           910.0;
+    AIR_DENSITY =                 1.225;
+    FILLING_RATE =                1.0;      // wag
+    METERPERDEG = 111317.0;           // based on circumference at equator, https://solarsystem.nasa.gov/planets/earth/facts
+
+    initStorm();
+    calcWindVelocity( 10000.0, 0 );
+    
+ /**
+ * Initialise on a per-storm basis.
+ */
+function initStorm () {
+     
+    // we need the peripheral pressure, in pascals
+    peripheralPressure = PERIPHERAL_PRESSURE * 100.0;
+    centralPressure = CENTRAL_PRESSURE * 100.0;  // pascals
+    deltPressure = peripheralPressure - centralPressure;
+
+    // set the filling rate in pascals
+    fillingRate = FILLING_RATE / 36.0;
+
+    // set limits on RMax ( in metres )
+    rMaxMax = 200000.0;    // 200 km
+    rMaxMin = 2000.0;      // 2 km
+
+    // we need it converted to metres, but don't let it over-range
+    radiusToMaxWind = 10.0;  //Math.max( rMaxMax, rMaxMin );
+
+    // hardcode the inflow angle (why?)
+    inflowAngle = Math.toRad(INFLOW_ANGLE);
+
+    // covert rate of increase in RMAX over land to m/s
+     rateOfIncrease = 20;			// rate of increase of in RMAX over land (km/hr)
+     rateOfIncrease /= 3.6;
+     translationalSpeed = 5;	    // speed that eye is moving (m/s)
+     signHemisphere = 1.0;
+
+     // convert inflow-angle to radians
+    alpha = -inflowAngle - Math.PI / 2;		// was positive alpha...
+
+    //----- asymmetric part ----
+    T0 = 0.514791;	// hmmm, what is this constant?
+    ATT = 1.5 * Math.pow(translationalSpeed, 0.63) * Math.pow(T0, 0.37);
+
+    //----- Initial Holland model parameters
+    // B parameter - based on central pressure (in millibars)
+    bHolland = 1.5 + (980.0 - centralPressure / 100.0) / 120.0;
+    // A parameter - based on distance in kilometres
+    aHolland = Math.pow((radiusToMaxWind / 1.0), bHolland);
+
+    // density of air (kg/m^3)
+    airDensity = AIR_DENSITY;
+
+     carto = new Carto();
+
+ }
+
+    /**
+     * Calculate the cyclone wind velocity, pressure and pressure gradients at a specified point at the current time
+     *
+     * @param rDist
+     * @param ang
+     * @returns {{x: number, y: number}}
+     */
+    function calcWindVelocity ( rDist, ang ) {
+        let velocity = { x: 0, y: 0 };
+
+        let Rkm = rDist / 1000.0;										// kilometres
+        let Rf2 = 0.5 * rDist * Math.abs(CORIOLIS);			// metres/sec
+        let Rb = Math.pow(Rkm, bHolland);									// km^B
+        let earb = Math.exp(-aHolland / Rb);							// dimensionless
+        let pressDiff = deltPressure * earb;								// Pascals
+        let vel = pressDiff * aHolland * bHolland / Rb;			    // Pascals
+        let cycloneAzimuth = 0;
+
+        vel = Math.sqrt(vel / airDensity + Rf2 * Rf2) - Rf2;		// m/s
+
+        //	wind azimuth at cell centre
+        let azimuth = ang + signHemisphere * alpha;  // was minus sign, etc
+        let beta    = azimuth - cycloneAzimuth;
+
+        if (true || vel >= ATT) {
+            vel += ATT * Math.cos(carto.azimuthToRadians(beta));          // - HALF_PI );
+            velocity.vx = vel * Math.sin(carto.azimuthToRadians(azimuth));     // - HALF_PI );
+            velocity.vy = vel * Math.cos(carto.azimuthToRadians(azimuth));     // - HALF_PI);
+        }
+        else {
+            velocity.vx = 0.0;
+            velocity.vy = 0.0;
+        }
+
+        return velocity;
+    }
+
+</script>
+
+</body>
+</html>
