@@ -329,6 +329,7 @@ class HurrPlot  {
         const material = new THREE.MeshLambertMaterial({  color: 0xffffff, flatShading: true });
         let arrowMesh = new THREE.Mesh(arrowGeometry, material);
         arrowMesh.rotateX(Math.HALF_PI);
+        //arrowMesh.rotateY(Math.HALF_PI);
         let scale3D = { x: 0.01, y: 0.01, z:0.01 }
         arrowMesh.scale.x = scale3D.x;
         arrowMesh.scale.y = scale3D.y;
@@ -413,6 +414,14 @@ class HurrPlot  {
                 let xyz = this.carto.latLonToXYZ(met.lat, met.lon, HurrPlot.GLOBE_DIAM);
                 arrow = arrows[j - dataRect.x0][i - dataRect.y0];
                 arrow.position.set(xyz.x, xyz.y, xyz.z);
+                let veloc = Math.hypot(met.xVel, met.yVel);
+                let scal = veloc / 100.0;
+                let rot = Math.atan2( met.yVel, met.xVel);
+                arrow.scale.x = scal / 10.0;
+                arrow.scale.y = scal / 10.0;
+                arrow.rotateX( 0.0 );
+                arrow.rotateY( 0.0 );
+                arrow.rotateZ( rot );
             }
         }
 

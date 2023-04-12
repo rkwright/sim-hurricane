@@ -27,7 +27,7 @@ class HurrModel {
     static FILLING_RATE =                1.0;      // wag
 
     static TIME_STEP = 0.01;
-    static TIME_OUT  = 100.0;   // ms
+    static TIME_OUT  = 500.0;   // ms
 
     static DIMX = 10;
     static DIMY = 10;
