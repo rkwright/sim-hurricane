@@ -24,7 +24,7 @@ class HurrModel {
     static CORIOLIS =                    2.0e-5;	// Coriolis parameter in the tropics (1/s)
     static MIN_PRESSURE_DIFFERENCE =     0.1;
     static AIR_DENSITY =                 1.225;
-    static FILLING_RATE =                20.0;      // wag
+    static FILLING_RATE =                1.0;      // wag
 
     static TIME_STEP = 0.01;
     static TIME_OUT  = 100.0;   // ms
@@ -53,7 +53,7 @@ class HurrModel {
 
         this.radiusStormInfluence = 750.0;	// radius of storm influence, in km
         this.cycloneAzimuth = 0;			// azimuth of hurricane track (degrees clockwise from North)
-        this.fillingRate = 0;				// rate at which center fills (hPa/hr)
+        this.fillingRate = 1;				// rate at which center fills (hPa/hr)
         this.peripheralPressure = 0;	    // pressure outside hurricane proper
         this.centralPressure = 0;		    // initial pressure at the eye
         this.radiusToMaxWind = 0;		    // radius from eye to max windspeed
@@ -164,7 +164,7 @@ class HurrModel {
 
         // we need the peripheral pressure, in pascals
         this.peripheralPressure = HurrModel.PERIPHERAL_PRESSURE * 100.0;
-        this.centralPressure = storm.obs[0].pressure * 100.0;  // pascals
+        this.centralPressure = 910.0 * 100.0;  //storm.obs[0].pressure * 100.0;  // pascals
         this.deltPressure = this.peripheralPressure - this.centralPressure;
 
         // set the filling rate in pascals
@@ -175,7 +175,7 @@ class HurrModel {
         this.rMaxMin = 2000.0;      // 2 km
 
         // we need it converted to metres, but don't let it over-range
-        this.radiusToMaxWind = Math.max( this.rMaxMax, this.rMaxMin );
+        this.radiusToMaxWind = 10.0;   // Math.max( this.rMaxMax, this.rMaxMin );
 
         // hardcode the inflow angle (why?)
         this.inflowAngle = Math.toRad(HurrModel.INFLOW_ANGLE);
@@ -194,7 +194,7 @@ class HurrModel {
         // B parameter - based on central pressure (in millibars)
         this.bHolland = 1.5 + (980.0 - this.centralPressure / 100.0) / 120.0;
         // A parameter - based on distance in kilometres
-        this.aHolland = Math.pow((this.radiusToMaxWind / 1000.0), this.bHolland);
+        this.aHolland = Math.pow((this.radiusToMaxWind / 1.0), this.bHolland);
 
         // density of air (kg/m^3)
         this.airDensity = HurrModel.AIR_DENSITY;
@@ -290,11 +290,11 @@ class HurrModel {
         for (let i = 0; i < this.nAngularSamples; i++) {
             let angle = this.sampleAngle[i];
 
-            for ( let j = 0; j < this.nRadialSamples; j++ ) {
+            for ( let j = 1; j < this.nRadialSamples; j++ ) {
 
                 let velocity = this.calcWindVelocity(this.sampleDist[j], angle);
 
-              //  console.log("velocity: " + velocity.x + " " + velocity.y);
+                console.log("Update: velocity: " + velocity.x.toFixed(2) + " " + velocity.y.toFixed(2) + " sampDist: " +  this.sampleDist[j].toFixed(2));
 
                 this.sampleData[i][j].xVel = velocity.x;
                 this.sampleData[i][j].yVel = velocity.y;
@@ -416,12 +416,12 @@ class HurrModel {
 
             if (vel >= this.ATT) {
                 vel += this.ATT * Math.cos(this.carto.azimuthToRadians(beta));          // - HALF_PI );
-                velocity.vx = vel * Math.sin(this.carto.azimuthToRadians(azimuth));     // - HALF_PI );
-                velocity.vy = vel * Math.cos(this.carto.azimuthToRadians(azimuth));     // - HALF_PI);
+                velocity.x = vel * Math.sin(this.carto.azimuthToRadians(azimuth));     // - HALF_PI );
+                velocity.y = vel * Math.cos(this.carto.azimuthToRadians(azimuth));     // - HALF_PI);
             }
             else {
-                velocity.vx = 0.0;
-                velocity.vy = 0.0;
+                velocity.x = 0.0;
+                velocity.y = 0.0;
             }
         }
 
@@ -456,7 +456,7 @@ class HurrModel {
         let Rb = Math.pow(Rkm, this.bHolland);									// km^B
         let earb = Math.exp(-this.aHolland / Rb);							// dimensionless
         let pressDiff = this.deltPressure * earb;								// Pascals
-        let vel = pressDiff * this.aHolland * this.bHolland / Rb;			    // Pascals
+        let vel = Math.abs(pressDiff) * this.aHolland * this.bHolland / Rb;			    // Pascals
 
         return Math.sqrt(vel / this.airDensity + Rf2 * Rf2) - Rf2;		// m/s
     }

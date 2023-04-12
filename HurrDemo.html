@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hurricane Demo</title>
+    <title>Hurricane Viewer</title>
     <link rel="stylesheet" type="text/css" href="css/gfx-scene.css" />
     <!-- Set the viewport size to the screen size, so it will be displayed maximized, but unscaled. -->
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"/>
@@ -70,12 +70,12 @@
     var hurrModel;
 
     // then initialize our demo's stuff
-    initializeDemo();
+    initViewer();
 
     /**
-     * Initialize the Demo.
+     * Initialize the viewer.
      */
-    function initializeDemo() {
+    function initViewer() {
 
         this.hurrModel = new HurrModel();
         this.hurrPlot  = new HurrPlot( this.hurrModel );
@@ -115,7 +115,7 @@
     }
 
     /**
-     *  Sets the rotation rate ON/OFF by callng on the model.
+     *  Sets the rotation rate ON/OFF by calling on the model.
      */
     function rotationRate() {
         let rotate = document.getElementById('rotationRate');
